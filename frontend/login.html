@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Wisdom General Hospital</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="public.css">
+    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <header class="public-header auth-header">
+        <nav class="public-nav">
+            <a class="public-logo" href="index.html">Wisdom General Hospital</a>
+            <div class="public-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Our Services</a>
+                <a href="about.html">About Us</a>
+                <a href="faq.html">FAQs</a>
+                <a class="nav-solid active" href="login.html">Sign In</a>
+                <a class="nav-outline" href="register.html">Sign Up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="auth-main">
+        <div class="login-shell">
+            <section class="login-hero">
+                <div class="login-orb login-orb-one"></div>
+                <div class="login-orb login-orb-two"></div>
+                <p class="login-kicker">Wisdom General Hospital</p>
+                <h1>Secure Sign In For<br>Patients, Doctors, And Admins</h1>
+                <p class="login-copy">
+                    Access appointments, medical records, doctor workflows, and clinic updates from one polished portal.
+                </p>
+                <div class="login-highlights">
+                    <div class="login-highlight">
+                        <span class="highlight-number">Monday-Friday</span>
+                        <span class="highlight-label">Clinic Days</span>
+                    </div>
+                    <div class="login-highlight">
+                        <span class="highlight-number">9:00 AM - 4:00 PM</span>
+                        <span class="highlight-label">Working Hours</span>
+                    </div>
+                    <div class="login-highlight">
+                        <span class="highlight-number">3</span>
+                        <span class="highlight-label">User Roles</span>
+                    </div>
+                </div>
+                <div class="login-visual-cards">
+                    <article class="login-info-card login-info-card-photo">
+                        <span class="feature-chip-label">Clinic Access</span>
+                        <strong>One secure space for appointments, approvals, messages, and records.</strong>
+                    </article>
+                    <article class="login-info-card">
+                        <i class="fa-solid fa-shield-heart"></i>
+                        <div>
+                            <strong>Protected sign in</strong>
+                            <p>Role-based access keeps each workspace focused, clean, and secure.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="login-panel">
+                <div class="login-card">
+                    <p class="login-card-label">Secure Access</p>
+                    <h2>Sign In</h2>
+                    <p class="login-card-copy">Enter your credentials to continue to the hospital portal.</p>
+
+                    <label class="login-field">
+                        <span>Role</span>
+                        <select id="roleSelect">
+                            <option value="patient">Patient</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </label>
+
+                    <label class="login-field">
+                        <span>Email</span>
+                        <div class="input-shell">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="email" placeholder="you@example.com">
+                        </div>
+                    </label>
+
+                    <label class="login-field">
+                        <span>Password</span>
+                        <div class="input-shell password-shell">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="password" placeholder="Enter your password">
+                            <button class="password-toggle" type="button" onclick="togglePasswordVisibility('password', this)" aria-label="Show password">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+
+                    <label class="remember-check">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+
+                    <button class="login-button" type="button" onclick="login()">Sign In</button>
+
+                    <div class="login-links">
+                        <a href="#" onclick="forgotPassword(event)">Forgot password?</a>
+                        <a href="register.html">Create account</a>
+                    </div>
+
+                    <p id="error" class="error login-error"></p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="public-footer auth-footer">
+        <div>
+            <strong>Wisdom General Hospital</strong>
+            <p>Trusted digital access for patients, doctors, and clinic teams.</p>
+        </div>
+        <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="services.html">Our Services</a>
+            <a href="about.html">About Us</a>
+            <a href="faq.html">FAQs</a>
+        </div>
+    </footer>
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <div class="layout dashboard-layout">
+        <aside class="sidebar dashboard-sidebar">
+            <div class="sidebar-top">
+                <p class="sidebar-eyebrow">Wisdom General Hospital</p>
+                <h2>Notifications</h2>
+                <p class="sidebar-copy">Follow updates related to appointments and requests.</p>
+
+                <ul class="sidebar-nav">
+                    <li onclick="window.location.href='dashboard.html'">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li class="active">
+                        <i class="fa-solid fa-bell"></i>
+                        <span>Notifications</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-status-card">
+                    <p class="sidebar-status-label">Session</p>
+                    <p id="role" class="sidebar-role"></p>
+                </div>
+                <button class="logout-btn dashboard-logout-btn" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content dashboard-main">
+            <header class="top-bar dashboard-topbar">
+                <div>
+                    <p class="page-kicker">Alerts</p>
+                    <h1 id="notificationsTitle">Notifications</h1>
+                    <p id="notificationsSubtitle" class="welcome-text">Recent appointment updates.</p>
+                </div>
+            </header>
+
+            <section class="dashboard-panel notifications-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="panel-kicker">Activity Feed</p>
+                        <h3>Latest Notifications</h3>
+                    </div>
+                </div>
+
+                <div id="deliveryStatusPanel" class="delivery-status-panel" style="display:none;"></div>
+
+                <div id="notificationsList" class="notifications-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="notifications.js"></script>
+</body>
+</html>

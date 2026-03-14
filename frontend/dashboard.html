@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body class="dashboard-page">
+    <div class="layout dashboard-layout">
+        <aside class="sidebar dashboard-sidebar">
+            <div class="sidebar-top">
+                <p class="sidebar-eyebrow">Wisdom General Hospital</p>
+                <h2 id="sidebarTitle">Control Center</h2>
+                <p class="sidebar-copy" id="sidebarCopy">Appointments, users, and activity in one place.</p>
+
+                <ul class="sidebar-nav">
+                    <li class="active" data-section="overview" onclick="showSection('overview')">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span id="navOverview">Dashboard</span>
+                    </li>
+                    <li class="doctor-only" data-section="my-patients" onclick="showSection('my-patients')">
+                        <i class="fa-solid fa-hospital-user"></i>
+                        <span id="navPatients">My Patients</span>
+                    </li>
+                    <li data-section="appointments" onclick="showSection('appointments')">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span id="navAppointments">Appointments</span>
+                    </li>
+                    <li data-section="inbox" onclick="showSection('inbox')">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                        <span id="navInbox">Inbox</span>
+                    </li>
+                    <li data-section="records" onclick="showSection('records')">
+                        <i class="fa-solid fa-file-medical"></i>
+                        <span id="navRecords">Medical Records</span>
+                    </li>
+                    <li data-section="settings" onclick="showSection('settings')">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span id="navSettings">Settings</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-status-card">
+                    <p class="sidebar-status-label">Session</p>
+                    <p id="role" class="sidebar-role"></p>
+                </div>
+
+                <button class="logout-btn dashboard-logout-btn" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content dashboard-main">
+            <header class="top-bar dashboard-topbar patient-topbar">
+                <div>
+                    <p class="page-kicker">Patient Portal</p>
+                    <h1 id="dashboardTitle">Dashboard</h1>
+                    <p id="welcomeText" class="welcome-text">Welcome back.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-pill" type="button" onclick="window.location.href='notifications.html'">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notificationCounter">0</span>
+                    </button>
+                    <div class="topbar-profile">
+                        <div class="profile-avatar topbar-avatar" id="profileAvatar">U</div>
+                        <div>
+                            <strong id="profileNameMini">User</strong>
+                            <small id="profileIdMini">Patient ID</small>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="admin-only admin-command-strip">
+                <article class="admin-command-card">
+                    <span class="panel-tag admin-tag">System Overview</span>
+                    <strong id="adminCommandTitle">Administrative control across appointments, doctors, and patients.</strong>
+                    <p id="adminCommandText">Use the admin workspace to supervise activity, resolve pending decisions, and keep the platform balanced.</p>
+                </article>
+                <article class="admin-command-meta">
+                    <div class="admin-meta-item">
+                        <span>Pending approvals</span>
+                        <strong id="adminPendingFocus">0</strong>
+                    </div>
+                    <div class="admin-meta-item">
+                        <span>Doctors</span>
+                        <strong id="adminDoctorCount">0</strong>
+                    </div>
+                    <div class="admin-meta-item">
+                        <span>Patients</span>
+                        <strong id="adminPatientCount">0</strong>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-section active" data-section-panel="overview">
+                <section class="dashboard-hero-banner">
+                    <div class="dashboard-hero-copy">
+                        <p class="hero-kicker">Daily Focus</p>
+                        <h2 id="heroBannerTitle">Organize today’s care with a cleaner clinical workspace.</h2>
+                        <p id="heroBannerText">
+                            Follow appointments, messages, records, and activity from one focused dashboard.
+                        </p>
+                    </div>
+                    <div class="dashboard-hero-visual">
+                        <div class="dashboard-hero-card">
+                            <span class="panel-tag">Live Overview</span>
+                            <strong>Appointments, communication, and records stay connected in one flow.</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel-header-row">
+                    <div>
+                        <p class="panel-kicker">Overview</p>
+                        <h3 id="overviewTitle">Your health dashboard</h3>
+                    </div>
+                </section>
+
+                <section class="stats-container dashboard-stats patient-stats">
+                    <div class="stat-card total-card">
+                        <span class="stat-label" id="statLabelPrimary">Upcoming Appointments</span>
+                        <p id="statTotal">0</p>
+                    </div>
+
+                    <div class="stat-card pending-card">
+                        <span class="stat-label" id="statLabelSecondary">Unread Messages</span>
+                        <p id="statPending">0</p>
+                    </div>
+
+                    <div class="stat-card approved-card">
+                        <span class="stat-label" id="statLabelTertiary">Medical Records</span>
+                        <p id="statApproved">0</p>
+                    </div>
+
+                    <div class="stat-card rejected-card">
+                        <span class="stat-label" id="statLabelQuaternary">Rejected</span>
+                        <p id="statRejected">0</p>
+                    </div>
+                </section>
+
+                <section class="admin-only admin-ops-grid">
+                    <article class="admin-ops-card">
+                        <span class="detail-label">Queue Health</span>
+                        <strong id="adminOpsQueueValue">0 pending appointments</strong>
+                        <p id="adminOpsQueueText">Pending requests waiting for a doctor or admin decision.</p>
+                    </article>
+                    <article class="admin-ops-card">
+                        <span class="detail-label">Care Network</span>
+                        <strong id="adminOpsCoverageValue">0 doctors covering 0 patients</strong>
+                        <p id="adminOpsCoverageText">Registered users currently managed by the system.</p>
+                    </article>
+                    <article class="admin-ops-card">
+                        <span class="detail-label">Approval Rate</span>
+                        <strong id="adminOpsApprovalValue">0%</strong>
+                        <p id="adminOpsApprovalText">Share of appointments already approved.</p>
+                    </article>
+                </section>
+
+                <section class="overview-grid">
+                    <section class="dashboard-panel wide-panel">
+                        <div class="panel-header split-header">
+                            <div>
+                                <p class="panel-kicker">Upcoming Appointments</p>
+                                <h3 id="upcomingPanelTitle">Your Next Visits</h3>
+                            </div>
+                            <button class="link-button" type="button" onclick="showSection('appointments')">View All</button>
+                        </div>
+                        <div id="upcomingAppointments" class="stack-list"></div>
+                    </section>
+
+                    <section class="dashboard-panel">
+                        <div class="panel-header split-header">
+                            <div>
+                                <p class="panel-kicker">Recent Messages</p>
+                                <h3 id="messagesPanelTitle">Inbox Preview</h3>
+                            </div>
+                            <button class="link-button" type="button" onclick="showSection('inbox')">View All</button>
+                        </div>
+                        <div id="recentMessages" class="stack-list"></div>
+                    </section>
+
+                    <section class="dashboard-panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker">Recent Activity</p>
+                                <h3 id="activityPanelTitle">Latest Updates</h3>
+                            </div>
+                        </div>
+                        <div id="recentActivity" class="stack-list"></div>
+                    </section>
+
+                    <section class="chart-container dashboard-panel analytics-panel doctor-admin-only">
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker">Insights</p>
+                                <h3>Appointment Analytics</h3>
+                            </div>
+                        </div>
+                        <canvas id="appointmentsChart"></canvas>
+                    </section>
+                </section>
+            </section>
+
+            <section class="dashboard-section" data-section-panel="appointments">
+                <section class="dashboard-panel appointments-page-panel">
+                    <div class="panel-header split-header">
+                        <div>
+                            <p class="panel-kicker">Appointments</p>
+                            <h3 id="appointmentsSectionTitle">Appointments</h3>
+                        </div>
+                        <div class="appointments-header-actions">
+                            <input type="text" id="appointmentSearch" class="search-input" placeholder="Search appointment" oninput="filterVisibleAppointments()">
+                            <button class="dashboard-primary-btn patient-only-inline" type="button" onclick="showSection('appointments')">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Book Appointment</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <section class="patient-only booking-area">
+                        <div class="appointment-form dashboard-panel patient-panel compact-panel">
+                            <div class="panel-header">
+                                <div>
+                                    <p class="panel-kicker">Patient Action</p>
+                                    <h3>Book Appointment</h3>
+                                </div>
+                            </div>
+
+                            <div class="booking-flow">
+                                <section class="booking-step">
+                                    <div class="booking-step-header">
+                                        <span class="booking-step-number">1</span>
+                                        <div>
+                                            <h4>Choose Doctor</h4>
+                                            <p>Select the doctor you want to visit.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="dashboard-form-grid">
+                                        <select id="doctorId">
+                                            <option value="">Select Doctor</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="selectedDoctorCard" class="selected-doctor-card" style="display:none;"></div>
+                                </section>
+
+                                <section class="booking-step">
+                                    <div class="booking-step-header">
+                                        <span class="booking-step-number">2</span>
+                                        <div>
+                                            <h4>Choose Available Slot</h4>
+                                            <p>Only available times for the selected doctor are shown.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="slot-picker" id="slotPicker">
+                                        <div id="doctorSlots" class="doctor-slots">
+                                            <div class="empty-message">Select a doctor to load available slots.</div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <button class="dashboard-primary-btn" onclick="createAppointment()">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Create Appointment</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section id="doctorSection" class="dashboard-panel doctor-panel compact-panel" style="display:none;">
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker">Doctor View</p>
+                                <h3>Doctor Appointments</h3>
+                            </div>
+                        </div>
+
+                        <div id="deliveryStatusPanel" class="delivery-status-panel" style="display:none;"></div>
+
+                        <div id="doctorCalendar" class="doctor-calendar-grid"></div>
+
+                        <div class="table-wrap">
+                            <table id="appointmentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Patient Name</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="admin-only dashboard-panel admin-panel compact-panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker">Admin Tools</p>
+                                <h3>Filter Appointments</h3>
+                            </div>
+                        </div>
+
+                        <div class="admin-filters dashboard-filter-row">
+                            <button onclick="filterAppointments('ALL')">All</button>
+                            <button onclick="filterAppointments('PENDING')">Pending</button>
+                            <button onclick="filterAppointments('APPROVED')">Approved</button>
+                            <button onclick="filterAppointments('REJECTED')">Rejected</button>
+                        </div>
+                    </section>
+
+                    <div id="appointmentsList" class="appointments-card-list"></div>
+                </section>
+            </section>
+
+            <section class="dashboard-section doctor-only" data-section-panel="my-patients">
+                <section class="dashboard-panel">
+                    <div class="panel-header split-header">
+                        <div>
+                            <p class="panel-kicker">My Patients</p>
+                            <h3>Assigned Patients</h3>
+                        </div>
+                        <div class="appointments-header-actions">
+                            <input type="text" id="patientSearch" class="search-input" placeholder="Search patients" oninput="filterDoctorPatients()">
+                            <button class="dashboard-primary-btn" type="button" onclick="addPatientFromDoctor()">
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span>Add Patient</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table id="doctorPatientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Patient Name</th>
+                                    <th>Age</th>
+                                    <th>Last Visit</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="doctorPatientsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section class="dashboard-section" data-section-panel="inbox">
+                <section class="dashboard-panel inbox-layout">
+                    <div class="inbox-list-panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker">Inbox</p>
+                                <h3>Messages</h3>
+                            </div>
+                        </div>
+                        <div id="inboxList" class="message-list"></div>
+                    </div>
+                    <div class="inbox-content-panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker">Message Content</p>
+                                <h3 id="selectedMessageTitle">Select a message</h3>
+                            </div>
+                        </div>
+                        <div id="selectedMessageContent" class="message-content">
+                            Choose a message from the inbox to read its full content.
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <section class="dashboard-section" data-section-panel="records">
+                <section class="dashboard-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-kicker" id="recordsKicker">Medical Records</p>
+                            <h3 id="recordsTitle">Your Documents</h3>
+                        </div>
+                    </div>
+
+                    <section class="doctor-only doctor-reports-grid">
+                        <div class="stats-container report-stat-grid">
+                            <div class="stat-card total-card">
+                                <span class="stat-label">New Patients</span>
+                                <p id="reportNewPatients">0</p>
+                            </div>
+                            <div class="stat-card approved-card">
+                                <span class="stat-label">Appointments Completed</span>
+                                <p id="reportCompletedAppointments">0</p>
+                            </div>
+                            <div class="stat-card pending-card">
+                                <span class="stat-label">Prescriptions Issued</span>
+                                <p id="reportPrescriptions">0</p>
+                            </div>
+                            <div class="stat-card rejected-card">
+                                <span class="stat-label">Average Wait Time</span>
+                                <p id="reportWaitTime">0 min</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-info-grid">
+                            <div class="settings-card">
+                                <span class="detail-label">Appointment Type Distribution</span>
+                                <strong>Clinical Mix</strong>
+                                <div id="reportTypeBreakdown" class="report-list"></div>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Detailed Reports</span>
+                                <strong>Modules</strong>
+                                <div id="reportModules" class="report-list"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="table-wrap patient-only">
+                        <table id="recordsTable">
+                            <thead>
+                                <tr>
+                                    <th>Document Name</th>
+                                    <th>Date</th>
+                                    <th>Doctor</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section class="dashboard-section" data-section-panel="settings">
+                <section class="dashboard-panel profile-detail-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-kicker">Patient Account</p>
+                            <h3>User Details</h3>
+                        </div>
+                    </div>
+
+                    <div class="account-tabs">
+                        <button class="tab-button active" type="button" data-settings-tab="account" onclick="activateSettingsTab(this)">Account Settings</button>
+                        <button class="tab-button" type="button" data-settings-tab="security" onclick="activateSettingsTab(this)">Login & Security</button>
+                        <button class="tab-button" type="button" data-settings-tab="notifications" onclick="activateSettingsTab(this)">Notifications</button>
+                        <button class="tab-button" type="button" data-settings-tab="interface" onclick="activateSettingsTab(this)">Interface</button>
+                    </div>
+
+                    <div class="settings-tab-panel active" data-settings-panel="account">
+                        <div class="profile-detail-grid">
+                            <div class="profile-detail-card">
+                                <span class="detail-label">Profile Picture</span>
+                                <div class="profile-avatar" id="settingsAvatar">U</div>
+                            </div>
+                            <div class="profile-detail-card">
+                                <span class="detail-label">Patient ID</span>
+                                <strong id="profileDetailId">ID</strong>
+                            </div>
+                            <div class="profile-detail-card">
+                                <span class="detail-label">Full Name</span>
+                                <strong id="profileDetailName">User</strong>
+                            </div>
+                            <div class="profile-detail-card">
+                                <span class="detail-label">Email</span>
+                                <strong id="profileDetailEmail">email@example.com</strong>
+                            </div>
+                            <div class="profile-detail-card">
+                                <span class="detail-label">Phone</span>
+                                <strong id="profileDetailPhone">Not available</strong>
+                            </div>
+                            <div class="profile-detail-card">
+                                <span class="detail-label">Role</span>
+                                <strong id="profileDetailRole">Role</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-tab-panel" data-settings-panel="security">
+                        <div class="settings-info-grid">
+                            <div class="settings-card">
+                                <span class="detail-label">Login Email</span>
+                                <strong id="securityEmail">email@example.com</strong>
+                                <p>Your account uses this email address to sign in.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Password</span>
+                                <strong>Password protected</strong>
+                                <p>Your password is securely stored with encryption on the backend.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Session</span>
+                                <strong>JWT Active</strong>
+                                <p>Your current login session is active in this browser.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Role Access</span>
+                                <strong id="securityRole">Role</strong>
+                                <p>Your permissions are based on the account role used at login.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-tab-panel" data-settings-panel="notifications">
+                        <div class="settings-info-grid">
+                            <div class="settings-card">
+                                <span class="detail-label">Unread Notifications</span>
+                                <strong id="settingsNotificationCount">0</strong>
+                                <p>Unread items from appointment updates and inbox messages.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Main Alerts</span>
+                                <strong>Appointments</strong>
+                                <p>Approval, rejection, and pending appointment status messages appear in Inbox.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">System Updates</span>
+                                <strong>Enabled</strong>
+                                <p>General application alerts and workflow updates are available from Notifications.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-tab-panel" data-settings-panel="interface">
+                        <div class="settings-info-grid">
+                            <div class="settings-card">
+                                <span class="detail-label">Dashboard Layout</span>
+                                <strong>Sidebar Navigation</strong>
+                                <p>Use the left navigation panel to move between Dashboard, Appointments, Inbox, Records, and Settings.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Current Theme</span>
+                                <strong>Clinic Light</strong>
+                                <p>The interface uses a light medical dashboard style optimized for readability.</p>
+                            </div>
+                            <div class="settings-card">
+                                <span class="detail-label">Quick Tip</span>
+                                <strong>Use Search</strong>
+                                <p>In Appointments, search by doctor, status, date, or time to find bookings faster.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="dashboard-primary-btn top-gap" type="button" onclick="handleProfileUpdateClick()">Update Profile</button>
+                </section>
+
+                <section class="dashboard-panel doctor-only availability-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-kicker">Availability</p>
+                            <h3>Doctor Working Hours</h3>
+                        </div>
+                    </div>
+
+                    <div id="availabilityList" class="availability-list"></div>
+
+                    <button class="dashboard-primary-btn" type="button" onclick="saveAvailability()">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save Availability</span>
+                    </button>
+                </section>
+
+                <section class="dashboard-panel settings-panel doctor-admin-only">
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-kicker">Workspace</p>
+                            <h3>Preferences</h3>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <span class="detail-label">Authentication</span>
+                            <strong>JWT session active</strong>
+                            <p>Your session is currently stored in local browser storage.</p>
+                        </div>
+                        <div class="settings-card">
+                            <span class="detail-label">API Endpoint</span>
+                            <strong>127.0.0.1:5000</strong>
+                            <p>The dashboard is connected to the local Flask backend.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel admin-management-panel admin-only">
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-kicker">Admin Management</p>
+                            <h3>Doctors And Patients</h3>
+                        </div>
+                    </div>
+
+                    <div class="management-grid">
+                        <section class="management-card">
+                            <div class="management-header">
+                                <div>
+                                    <span class="detail-label">Doctors</span>
+                                    <h4 id="doctorFormTitle">Add Doctor</h4>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-form-grid">
+                                <input type="text" id="doctorFullName" placeholder="Doctor full name">
+                                <input type="text" id="doctorSpecialtyInput" placeholder="Specialty">
+                                <input type="email" id="doctorEmail" placeholder="Doctor email">
+                                <input type="password" id="doctorPassword" placeholder="Password for new doctor">
+                            </div>
+
+                            <div class="management-actions">
+                                <button class="dashboard-primary-btn" onclick="submitDoctorForm()">Save Doctor</button>
+                                <button class="secondary-btn" type="button" onclick="resetDoctorForm()">Clear</button>
+                            </div>
+
+                            <div id="doctorList" class="management-list"></div>
+                        </section>
+
+                        <section class="management-card">
+                            <div class="management-header">
+                                <div>
+                                    <span class="detail-label">Patients</span>
+                                    <h4 id="patientFormTitle">Edit Patient</h4>
+                                </div>
+                            </div>
+
+                            <p class="management-note">
+                                New patients must register themselves from the registration page.
+                            </p>
+
+                            <div class="dashboard-form-grid">
+                                <input type="text" id="patientFullName" placeholder="Patient full name">
+                                <input type="email" id="patientEmail" placeholder="Patient email">
+                                <input type="text" id="patientPhone" placeholder="Phone number">
+                                <input type="password" id="patientPassword" placeholder="Optional new password">
+                            </div>
+
+                            <div class="management-actions">
+                                <button class="dashboard-primary-btn" onclick="submitPatientForm()">Update Patient</button>
+                                <button class="secondary-btn" type="button" onclick="resetPatientForm()">Clear</button>
+                            </div>
+
+                            <div id="patientList" class="management-list"></div>
+                        </section>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dashboard-core.js"></script>
+    <script src="dashboard-data.js"></script>
+    <script src="dashboard-panels.js"></script>
+    <script src="dashboard-init.js"></script>
+</body>
+
+</html>

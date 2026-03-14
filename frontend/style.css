@@ -1,0 +1,16 @@
+/* ===================================================
+   CSS ENTRY NOTE
+=================================================== */
+
+/*
+This project now uses split stylesheets instead of one large file.
+
+Active files:
+- common.css      -> shared utilities like body reset and toasts
+- public.css      -> home, services, about, faq
+- auth.css        -> login and register pages
+- dashboard.css   -> dashboard and notifications pages
+
+Each HTML page links directly to the file it needs.
+This file is kept only as a guide so the project structure stays clear.
+*/

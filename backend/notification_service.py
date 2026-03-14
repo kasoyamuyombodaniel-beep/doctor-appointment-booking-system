@@ -1,0 +1,419 @@
+# ===================================================
+# IMPORTS
+# ===================================================
+
+# Standard libraries
+import os                     # Used to access environment variables
+import re                     # Used for text cleaning (doctor name, phone number)
+
+# ThreadPoolExecutor allows notifications to run in background threads
+from concurrent.futures import ThreadPoolExecutor
+
+# Flask object used to access application configuration and logging
+from flask import current_app
+
+
+# Try importing Flask-Mail for sending email notifications
+# If the library is not installed, Message will be None
+try:
+    from flask_mail import Message
+except Exception:
+    Message = None
+
+
+# Try importing Twilio client for sending SMS notifications
+# If Twilio SDK is not installed, Client will be None
+try:
+    from twilio.rest import Client
+except Exception:
+    Client = None
+
+
+# Thread pool used to execute notification sending asynchronously
+# This prevents API responses from waiting for email/SMS sending
+_notification_executor = ThreadPoolExecutor(max_workers=4)
+
+
+# ===================================================
+# EMAIL SUBJECT BUILDER
+# ===================================================
+
+def _build_email_subject():
+    """Return the email subject used in appointment notifications."""
+    return "Appointment Status Update"
+
+
+# ===================================================
+# DOCTOR NAME FORMATTER
+# ===================================================
+
+def _format_doctor_name(raw_name):
+    """
+    Normalize doctor name by removing repeated 'Dr.' prefixes.
+    Example: 'Dr. Dr. John Smith' -> 'John Smith'
+    """
+    name = str(raw_name or "").strip()
+
+    # Remove repeated "Dr." prefixes
+    name = re.sub(r"^(dr\.?\s*)+", "", name, flags=re.IGNORECASE)
+
+    # Default fallback name
+    return name or "Doctor"
+
+
+# ===================================================
+# PHONE NUMBER NORMALIZATION
+# ===================================================
+
+def _normalize_phone_number(raw_number):
+    """
+    Normalize phone numbers to international format.
+    Removes spaces, symbols and ensures a +countrycode prefix.
+    """
+    cleaned = re.sub(r"[^\d+]", "", str(raw_number or "").strip())
+
+    # Convert numbers starting with 00 to + format
+    if cleaned.startswith("00"):
+        cleaned = f"+{cleaned[2:]}"
+
+    # If number has no + but seems international, add +
+    if cleaned and not cleaned.startswith("+") and cleaned.isdigit() and len(cleaned) >= 11:
+        cleaned = f"+{cleaned}"
+
+    return cleaned
+
+
+# ===================================================
+# EMAIL BODY BUILDER
+# ===================================================
+
+def _build_email_body(payload):
+    """
+    Build the email message body using appointment data.
+    """
+    status = payload["status"]
+
+    appointment_day = payload.get("appointment_day")
+    appointment_day_text = f"{appointment_day}, " if appointment_day else ""
+
+    doctor_name = _format_doctor_name(payload.get("doctor_name"))
+
+    # Different guidance depending on appointment status
+    guidance = (
+        "Please arrive on time for your consultation."
+        if status == "APPROVED"
+        else "Please book another available time slot."
+    )
+
+    return (
+        f"Hello {payload['patient_name']},\n\n"
+        f"Your appointment request with Dr. {doctor_name} on "
+        f"{appointment_day_text}{payload['appointment_date']} at {payload['appointment_time']} "
+        f"has been {status}.\n\n"
+        f"{guidance}\n\n"
+        "Thank you."
+    )
+
+
+# ===================================================
+# SMS BODY BUILDER
+# ===================================================
+
+def _build_sms_body(payload):
+    """
+    Build SMS message text for appointment updates.
+    """
+    appointment_day = payload.get("appointment_day")
+    appointment_day_text = f"{appointment_day}, " if appointment_day else ""
+
+    doctor_name = _format_doctor_name(payload.get("doctor_name"))
+
+    return (
+        f"Your appointment with Dr. {doctor_name} on "
+        f"{appointment_day_text}{payload['appointment_date']} at {payload['appointment_time']} "
+        f"has been {payload['status']}."
+    )
+
+
+# ===================================================
+# EMAIL NOTIFICATION SENDER
+# ===================================================
+
+def send_email_notification(payload):
+    """
+    Send appointment status notification via email.
+    """
+
+    # Get Flask-Mail extension instance
+    mail = current_app.extensions.get("mail")
+
+    # Get default sender email from config
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+
+    # Validate email configuration
+    if not mail or not Message or not sender or not payload.get("patient_email"):
+        return {"channel": "email", "sent": False, "reason": "Email not configured"}
+
+    # Build email message
+    message = Message(
+        subject=_build_email_subject(),
+        sender=sender,
+        recipients=[payload["patient_email"]],
+        body=_build_email_body(payload)
+    )
+
+    # Send email
+    mail.send(message)
+
+    # Log email sending
+    current_app.logger.info(
+        "EMAIL SENT | appointment_status=%s | to=%s | patient=%s | doctor=%s",
+        payload["status"],
+        payload["patient_email"],
+        payload["patient_name"],
+        payload["doctor_name"]
+    )
+
+    return {
+        "channel": "email",
+        "sent": True,
+        "target": payload["patient_email"]
+    }
+
+
+# ===================================================
+# SMS NOTIFICATION SENDER
+# ===================================================
+
+def send_sms_notification(payload):
+    """
+    Send appointment notification via SMS using Twilio.
+    """
+
+    account_sid = current_app.config.get("TWILIO_ACCOUNT_SID")
+    auth_token = current_app.config.get("TWILIO_AUTH_TOKEN")
+    from_number = current_app.config.get("TWILIO_PHONE_NUMBER")
+    status_callback_url = current_app.config.get("TWILIO_STATUS_CALLBACK_URL")
+
+    # Normalize patient phone number
+    to_number = _normalize_phone_number(payload.get("patient_phone"))
+
+    # Validate Twilio configuration
+    if not Client or not account_sid or not auth_token or not from_number:
+        return {"channel": "sms", "sent": False, "reason": "SMS not configured"}
+
+    if not to_number:
+        return {
+            "channel": "sms",
+            "sent": False,
+            "reason": "Patient phone number missing",
+            "target": str(payload.get("patient_phone") or "")
+        }
+
+    if not to_number.startswith("+"):
+        return {
+            "channel": "sms",
+            "sent": False,
+            "reason": "Patient phone number must include country code",
+            "target": to_number
+        }
+
+    # Create Twilio client
+    client = Client(account_sid, auth_token)
+
+    # Build message parameters
+    create_kwargs = {
+        "body": _build_sms_body(payload),
+        "from_": from_number,
+        "to": to_number
+    }
+
+    # Add delivery callback URL if configured
+    if status_callback_url:
+        create_kwargs["status_callback"] = status_callback_url
+
+    # Send SMS
+    message = client.messages.create(**create_kwargs)
+
+    # Log SMS sending
+    current_app.logger.info(
+        "SMS ACCEPTED | appointment_status=%s | to=%s | patient=%s | doctor=%s | sid=%s | status=%s",
+        payload["status"],
+        to_number,
+        payload["patient_name"],
+        payload["doctor_name"],
+        getattr(message, "sid", None),
+        getattr(message, "status", None)
+    )
+
+    return {
+        "channel": "sms",
+        "sent": True,
+        "delivery_state": "queued",
+        "provider_status": getattr(message, "status", None),
+        "target": to_number,
+        "message_sid": getattr(message, "sid", None)
+    }
+
+
+# ===================================================
+# SEND BOTH EMAIL AND SMS
+# ===================================================
+
+def send_status_notifications(payload):
+    """
+    Send both email and SMS notifications.
+    """
+
+    results = []
+
+    for sender in (send_email_notification, send_sms_notification):
+        try:
+            results.append(sender(payload))
+        except Exception as error:
+
+            # Log failure
+            current_app.logger.error(
+                "%s FAILED | patient=%s | doctor=%s | reason=%s",
+                "EMAIL" if sender is send_email_notification else "SMS",
+                payload["patient_name"],
+                payload["doctor_name"],
+                str(error)
+            )
+
+            results.append({
+                "channel": "email" if sender is send_email_notification else "sms",
+                "sent": False,
+                "reason": str(error)
+            })
+
+    return results
+
+
+# ===================================================
+# INITIAL DELIVERY STATE BUILDERS
+# ===================================================
+
+def _is_email_configured(payload):
+    """Return True when email can be attempted for this payload."""
+    mail = current_app.extensions.get("mail")
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+    return bool(mail and Message and sender and payload.get("patient_email"))
+
+
+def _get_sms_validation_error(payload):
+    """Return the SMS blocking reason when the payload cannot be sent."""
+    account_sid = current_app.config.get("TWILIO_ACCOUNT_SID")
+    auth_token = current_app.config.get("TWILIO_AUTH_TOKEN")
+    from_number = current_app.config.get("TWILIO_PHONE_NUMBER")
+    to_number = _normalize_phone_number(payload.get("patient_phone"))
+
+    if not Client or not account_sid or not auth_token or not from_number:
+        return "SMS not configured", to_number
+
+    if not to_number:
+        return "Patient phone number missing", str(payload.get("patient_phone") or "")
+
+    if not to_number.startswith("+"):
+        return "Patient phone number must include country code", to_number
+
+    return None, to_number
+
+
+def _build_initial_notification_results(payload):
+    """Build the immediate notification state returned to the dashboard."""
+    results = []
+
+    if _is_email_configured(payload):
+        results.append({
+            "channel": "email",
+            "sent": True,
+            "delivery_state": "queued",
+            "reason": "Email queued for delivery",
+            "target": payload.get("patient_email")
+        })
+    else:
+        results.append({
+            "channel": "email",
+            "sent": False,
+            "reason": "Email not configured",
+            "target": payload.get("patient_email")
+        })
+
+    sms_error, sms_target = _get_sms_validation_error(payload)
+    if sms_error:
+        results.append({
+            "channel": "sms",
+            "sent": False,
+            "reason": sms_error,
+            "target": sms_target
+        })
+    else:
+        results.append({
+            "channel": "sms",
+            "sent": True,
+            "delivery_state": "queued",
+            "reason": "SMS queued for delivery",
+            "target": sms_target
+        })
+
+    return results
+
+
+# ===================================================
+# BACKGROUND NOTIFICATION EXECUTION
+# ===================================================
+
+def _run_status_notifications(app_obj, appointment_id, payload):
+    """Execute notifications in the background and persist their final state."""
+    from models import (
+        mark_appointment_notification_sent,
+        save_appointment_notification_details,
+        save_appointment_sms_tracking
+    )
+
+    with app_obj.app_context():
+        results = send_status_notifications(payload)
+        save_appointment_notification_details(appointment_id, results)
+
+        for item in results:
+            if item.get("channel") != "sms":
+                continue
+
+            message_sid = item.get("message_sid")
+            if not message_sid:
+                continue
+
+            save_appointment_sms_tracking(
+                appointment_id,
+                message_sid,
+                item.get("provider_status") or item.get("delivery_state"),
+                item.get("target")
+            )
+
+        if any(item.get("sent") for item in results):
+            mark_appointment_notification_sent(appointment_id, payload["status"])
+
+def enqueue_status_notifications(appointment_id, payload):
+    """
+    Queue notifications to be sent asynchronously.
+    """
+
+    from models import save_appointment_notification_details
+
+    # Save initial notification state
+    initial_results = _build_initial_notification_results(payload)
+    save_appointment_notification_details(appointment_id, initial_results)
+
+    # Get current Flask app instance
+    app_obj = current_app._get_current_object()
+
+    # Execute notification sending in background thread
+    _notification_executor.submit(
+        _run_status_notifications,
+        app_obj,
+        appointment_id,
+        payload
+    )
+
+    return initial_results

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Wisdom General Hospital</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="public.css">
+    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <header class="public-header auth-header">
+        <nav class="public-nav">
+            <a class="public-logo" href="index.html">Wisdom General Hospital</a>
+            <div class="public-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Our Services</a>
+                <a href="about.html">About Us</a>
+                <a href="faq.html">FAQs</a>
+                <a class="nav-outline" href="login.html">Sign In</a>
+                <a class="nav-solid active" href="register.html">Sign Up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="auth-main">
+        <div class="login-shell">
+            <section class="login-hero">
+                <div class="login-orb login-orb-one"></div>
+                <div class="login-orb login-orb-two"></div>
+                <p class="login-kicker">Wisdom General Hospital</p>
+                <h1>Create Your Patient Account</h1>
+                <p class="login-copy">
+                    Register once to request appointments, follow doctor decisions, and keep your medical journey organized.
+                </p>
+                <div class="login-highlights">
+                    <div class="login-highlight">
+                        <span class="highlight-number">Easy</span>
+                        <span class="highlight-label">Registration</span>
+                    </div>
+                    <div class="login-highlight">
+                        <span class="highlight-number">Fast</span>
+                        <span class="highlight-label">Booking</span>
+                    </div>
+                    <div class="login-highlight">
+                        <span class="highlight-number">Live</span>
+                        <span class="highlight-label">Updates</span>
+                    </div>
+                </div>
+                <div class="login-visual-cards">
+                    <article class="login-info-card login-info-card-photo register-photo-card">
+                        <span class="feature-chip-label">New Patient</span>
+                        <strong>Create your account once and keep every future appointment in one place.</strong>
+                    </article>
+                    <article class="login-info-card">
+                        <i class="fa-solid fa-user-check"></i>
+                        <div>
+                            <strong>Simple onboarding</strong>
+                            <p>Name, email, phone, and password are enough to start booking visits.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="login-panel">
+                <div class="login-card">
+                    <p class="login-card-label">Patient Registration</p>
+                    <h2>Sign Up</h2>
+                    <p class="login-card-copy">Create your patient profile to request appointments.</p>
+
+                    <label class="login-field">
+                        <span>Full Name</span>
+                        <div class="input-shell">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="fullName" placeholder="Your full name">
+                        </div>
+                    </label>
+
+                    <label class="login-field">
+                        <span>Email</span>
+                        <div class="input-shell">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="email" placeholder="you@example.com">
+                        </div>
+                    </label>
+
+                    <label class="login-field">
+                        <span>Phone</span>
+                        <div class="input-shell">
+                            <i class="fa-solid fa-phone"></i>
+                            <input type="text" id="phone" placeholder="Phone number">
+                        </div>
+                    </label>
+
+                    <label class="login-field">
+                        <span>Password</span>
+                        <div class="input-shell password-shell">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="password" placeholder="Create a password">
+                            <button class="password-toggle" type="button" onclick="togglePasswordVisibility('password', this)" aria-label="Show password">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+
+                    <button class="login-button" type="button" onclick="registerPatient()">Sign Up</button>
+
+                    <p id="error" class="error login-error"></p>
+                    <p class="auth-switch">
+                        Already have an account?
+                        <a href="login.html">Back to sign in</a>
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="public-footer auth-footer">
+        <div>
+            <strong>Wisdom General Hospital</strong>
+            <p>Trusted digital access for patients, doctors, and clinic teams.</p>
+        </div>
+        <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="services.html">Our Services</a>
+            <a href="about.html">About Us</a>
+            <a href="faq.html">FAQs</a>
+        </div>
+    </footer>
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="register.js"></script>
+</body>
+</html>
