@@ -22,6 +22,7 @@ from models import (
 
 # Authentication middleware that validates JWT tokens
 from auth_middleware import token_required
+from auth_middleware import admin_required
 
 # Create Flask Blueprint to group patient-related routes
 patient_bp = Blueprint("patient_bp", __name__)
@@ -34,6 +35,7 @@ patient_bp = Blueprint("patient_bp", __name__)
 # Endpoint to retrieve all patients
 # Typically used by admin management tools
 @patient_bp.route("/patients", methods=["GET"])
+@admin_required
 def patients():
     """Return the full patient list. Used mainly by admin tools."""
 
@@ -47,6 +49,7 @@ def patients():
 
 # Endpoint to retrieve a specific patient by ID
 @patient_bp.route("/patients/<int:patient_id>", methods=["GET"])
+@admin_required
 def get_patient(patient_id):
     """Return one patient by id."""
 
@@ -94,7 +97,7 @@ def create_patient():
         return jsonify({"message": "Patient created successfully"}), 201
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Unable to create patient right now"}), 500
 
 
 # ---------------------------------------------------

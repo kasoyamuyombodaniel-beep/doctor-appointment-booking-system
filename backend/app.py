@@ -4,6 +4,7 @@
 
 # Standard Python modules used for environment variables and file paths
 import os
+import secrets
 from pathlib import Path
 
 # Flask core class used to create the web application
@@ -83,8 +84,35 @@ load_env_file()
 # Create the Flask application instance
 app = Flask(__name__)
 
-# Enable CORS for all routes so the frontend can communicate with the backend
-CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization"])
+def _get_allowed_cors_origins():
+    """
+    Build the allowed frontend origin list from configuration.
+    """
+    raw_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+    allow_all = os.getenv("CORS_ALLOW_ALL", "false").lower() == "true"
+
+    if allow_all:
+        return "*"
+
+    if raw_origins.strip():
+        return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+    ]
+
+
+# Enable CORS only for configured frontend origins
+CORS(
+    app,
+    resources={r"/*": {"origins": _get_allowed_cors_origins()}},
+    allow_headers=["Content-Type", "Authorization"]
+)
 
 
 # ---------------------------------------------------
@@ -92,7 +120,13 @@ CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "A
 # ---------------------------------------------------
 
 # Secret key used for JWT tokens and session security
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "my_super_secret_key_123")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+
+if not os.getenv("SECRET_KEY"):
+    app.logger.warning("SECRET_KEY not set in environment; using an ephemeral development key.")
+
+# Debug mode must be explicitly enabled
+app.config["DEBUG"] = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
 
 # ---------------------------------------------------
@@ -116,6 +150,7 @@ app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 
 # Email password or app password
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+app.config["FRONTEND_URL"] = os.getenv("FRONTEND_URL")
 
 
 # Determine sender email and name for outgoing messages
@@ -185,4 +220,4 @@ app.register_blueprint(doctor_routes)
 # Run the Flask development server
 # debug=True enables automatic reload and detailed error messages
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=app.config["DEBUG"])

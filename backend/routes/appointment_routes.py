@@ -3,7 +3,7 @@
 # ===================================================
 
 # Flask utilities used to create API routes and handle JSON responses/requests
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 
 # Database-related functions used to manage appointments
 from models import (
@@ -61,7 +61,8 @@ def create_new_appointment(current_user_id, current_role):
 
     # Handle any errors during appointment creation
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        current_app.logger.exception("Creating appointment failed: %s", str(e))
+        return jsonify({"error": "Unable to create appointment"}), 400
 
 
 # ===================================================
@@ -101,6 +102,10 @@ def get_appointments(current_user_id, current_role):
 def remove_appointment(current_user_id, current_role, appointment_id):
     """Delete an appointment with role-based ownership checks."""
 
+    appointment = get_appointment_by_id(appointment_id)
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+
     # Admin users can delete any appointment
     if current_role == "admin":
         delete_appointment(appointment_id)
@@ -108,12 +113,14 @@ def remove_appointment(current_user_id, current_role, appointment_id):
 
     # Patients can only delete their own appointments
     if current_role == "patient":
-        appointments = get_patient_appointments(current_user_id)
+        if appointment["patient_id"] != current_user_id:
+            return jsonify({"error": "Unauthorized"}), 403
 
-        for appt in appointments:
-            if appt["id"] == appointment_id:
-                delete_appointment(appointment_id)
-                return jsonify({"message": "Appointment deleted successfully"})
+        if appointment["status"] != "PENDING":
+            return jsonify({"error": "Only pending appointments can be deleted"}), 400
+
+        delete_appointment(appointment_id)
+        return jsonify({"message": "Appointment deleted successfully"})
 
     # If user is not authorized
     return jsonify({"error": "Unauthorized"}), 403

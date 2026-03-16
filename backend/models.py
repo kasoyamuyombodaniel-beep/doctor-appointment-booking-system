@@ -4,6 +4,8 @@
 # Import required libraries:
 import json  # json for storing notification results
 import os  # os for environment variables
+import hashlib
+import secrets
 from datetime import date, datetime, timedelta # datetime for date and time calculations
 import mysql.connector  # mysql.connector for database communication
 
@@ -30,9 +32,33 @@ def get_db_connection():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
         user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", "Daniel_23112000"),
+        password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME", "doctor_booking_db")
     )
+
+
+def ensure_password_reset_tokens_table():
+    """Create the password reset token table if it does not exist yet."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_token_hash (token_hash),
+            INDEX idx_password_reset_email (email),
+            INDEX idx_password_reset_expires (expires_at)
+        )
+    """)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 
 def ensure_availability_table():
@@ -269,8 +295,21 @@ def update_patient(patient_id, full_name, email, password, phone):
 
 
 def delete_patient(patient_id):
+    ensure_doctor_patient_profiles_table()
+    ensure_medical_records_table()
+
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM medical_records
+        WHERE patient_id = %s
+    """, (patient_id,))
+
+    cursor.execute("""
+        DELETE FROM doctor_patient_profiles
+        WHERE patient_id = %s
+    """, (patient_id,))
 
     cursor.execute("""
         DELETE FROM appointments
@@ -522,6 +561,75 @@ def reset_user_password(email, new_password):
         return True
 
     return False
+
+
+def create_password_reset_token(email, expires_in_minutes=30):
+    """Create and persist a one-time password reset token."""
+    ensure_password_reset_tokens_table()
+
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    expires_at = datetime.utcnow() + timedelta(minutes=max(int(expires_in_minutes), 1))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE password_reset_tokens
+        SET used_at = NOW()
+        WHERE email = %s
+          AND used_at IS NULL
+          AND expires_at > NOW()
+    """, (email,))
+
+    cursor.execute("""
+        INSERT INTO password_reset_tokens (email, token_hash, expires_at)
+        VALUES (%s, %s, %s)
+    """, (email, token_hash, expires_at))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return raw_token
+
+
+def consume_password_reset_token(raw_token):
+    """Validate and consume a password reset token, returning the target email."""
+    ensure_password_reset_tokens_table()
+
+    token_hash = hashlib.sha256(str(raw_token or "").encode("utf-8")).hexdigest()
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT id, email
+        FROM password_reset_tokens
+        WHERE token_hash = %s
+          AND used_at IS NULL
+          AND expires_at > NOW()
+        LIMIT 1
+    """, (token_hash,))
+    token_row = cursor.fetchone()
+
+    if not token_row:
+        cursor.close()
+        conn.close()
+        return None
+
+    write_cursor = conn.cursor()
+    write_cursor.execute("""
+        UPDATE password_reset_tokens
+        SET used_at = NOW()
+        WHERE id = %s
+          AND used_at IS NULL
+    """, (token_row["id"],))
+
+    conn.commit()
+    write_cursor.close()
+    cursor.close()
+    conn.close()
+    return token_row["email"]
 
 
 def patient_email_exists(email, exclude_patient_id=None):
@@ -865,6 +973,11 @@ def delete_appointment(appointment_id):
     cursor = conn.cursor()
 
     cursor.execute("""
+        DELETE FROM medical_records
+        WHERE appointment_id = %s
+    """, (appointment_id,))
+
+    cursor.execute("""
         DELETE FROM appointments
         WHERE id = %s
     """, (appointment_id,))
@@ -1072,9 +1185,21 @@ def update_appointment_sms_delivery_status(message_sid, message_status, raw_payl
 
 def delete_doctor_and_related_data(doctor_id):
     ensure_availability_table()
+    ensure_doctor_patient_profiles_table()
+    ensure_medical_records_table()
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM medical_records
+        WHERE doctor_id = %s
+    """, (doctor_id,))
+
+    cursor.execute("""
+        DELETE FROM doctor_patient_profiles
+        WHERE doctor_id = %s
+    """, (doctor_id,))
 
     cursor.execute("""
         DELETE FROM appointments

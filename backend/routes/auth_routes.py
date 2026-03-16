@@ -11,7 +11,14 @@ import datetime
 import bcrypt
 
 # Database access functions
-from models import get_patient_by_email, get_doctor_by_email, reset_user_password
+from models import (
+    get_patient_by_email,
+    get_doctor_by_email,
+    reset_user_password,
+    create_password_reset_token,
+    consume_password_reset_token,
+)
+from notification_service import send_password_reset_email
 
 
 # Create a Flask Blueprint to group authentication routes
@@ -161,7 +168,8 @@ def login():
 
     # Catch unexpected server errors
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Login failed: %s", str(e))
+        return jsonify({"error": "Unable to process login right now"}), 500
 
 
 # ===================================================
@@ -186,26 +194,67 @@ def forgot_password():
 
         # Extract fields
         email = data.get("email", "").strip()
-        new_password = data.get("new_password", "")
 
         # Validate required inputs
-        if not email or not new_password:
-            return jsonify({"error": "Email and new password are required"}), 400
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
 
-        # Basic password length validation
-        if len(new_password) < 4:
-            return jsonify({"error": "Password must be at least 4 characters"}), 400
+        patient = get_patient_by_email(email)
+        doctor = get_doctor_by_email(email)
+        account_exists = bool(patient or doctor)
 
-        # Update password in database
-        updated = reset_user_password(email, new_password)
+        if account_exists:
+            token = create_password_reset_token(email)
+            base_url = current_app.config.get("FRONTEND_URL") or request.host_url.rstrip("/")
+            reset_link = f"{base_url}/reset-password?token={token}"
 
-        # If email does not exist
-        if not updated:
-            return jsonify({"error": "No account found with this email"}), 404
+            email_sent = send_password_reset_email(email, reset_link)
+            if not email_sent:
+                current_app.logger.warning(
+                    "Password reset requested for %s but email is not configured. Reset link: %s",
+                    email,
+                    reset_link
+                )
 
-        # Success response
-        return jsonify({"message": "Password updated successfully"}), 200
+        # Generic response avoids exposing whether the email exists.
+        return jsonify({
+            "message": "If the account exists, a password reset link has been generated"
+        }), 200
 
     # Catch unexpected errors
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Forgot-password failed: %s", str(e))
+        return jsonify({"error": "Unable to start password reset right now"}), 500
+
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    """
+    Complete a password reset using a one-time token.
+    """
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "Request body missing"}), 400
+
+        token = str(data.get("token", "")).strip()
+        new_password = data.get("new_password", "")
+
+        if not token or not new_password:
+            return jsonify({"error": "Token and new password are required"}), 400
+
+        if len(new_password) < 8:
+            return jsonify({"error": "Password must be at least 8 characters"}), 400
+
+        email = consume_password_reset_token(token)
+        if not email:
+            return jsonify({"error": "Invalid or expired reset token"}), 400
+
+        reset_user_password(email, new_password)
+        return jsonify({"message": "Password updated successfully"}), 200
+
+    except Exception as e:
+        current_app.logger.exception("Reset-password failed: %s", str(e))
+        return jsonify({"error": "Unable to reset password right now"}), 500

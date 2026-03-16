@@ -43,6 +43,11 @@ def _build_email_subject():
     return "Appointment Status Update"
 
 
+def _build_password_reset_subject():
+    """Return the subject used for password reset emails."""
+    return "Password Reset Request"
+
+
 # ===================================================
 # DOCTOR NAME FORMATTER
 # ===================================================
@@ -115,6 +120,16 @@ def _build_email_body(payload):
     )
 
 
+def _build_password_reset_body(reset_link):
+    """Build the password reset email body."""
+    return (
+        "A password reset was requested for your account.\n\n"
+        f"Use this link to choose a new password:\n{reset_link}\n\n"
+        "This link expires in 30 minutes and can only be used once.\n"
+        "If you did not request this change, you can ignore this email."
+    )
+
+
 # ===================================================
 # SMS BODY BUILDER
 # ===================================================
@@ -179,6 +194,26 @@ def send_email_notification(payload):
         "sent": True,
         "target": payload["patient_email"]
     }
+
+
+def send_password_reset_email(recipient_email, reset_link):
+    """
+    Send a password reset email if email delivery is configured.
+    """
+    mail = current_app.extensions.get("mail")
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+
+    if not mail or not Message or not sender or not recipient_email:
+        return False
+
+    message = Message(
+        subject=_build_password_reset_subject(),
+        sender=sender,
+        recipients=[recipient_email],
+        body=_build_password_reset_body(reset_link)
+    )
+    mail.send(message)
+    return True
 
 
 # ===================================================

@@ -3,7 +3,7 @@
 # ===================================================
 
 # Flask utilities used to create API routes and handle JSON requests/responses
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 
 # Database functions used for doctor management and related data
 from models import (
@@ -12,7 +12,8 @@ from models import (
     update_doctor_availability,      # Update doctor's availability schedule
     delete_doctor_and_related_data,  # Delete doctor and related records
     get_doctor_patients,             # Retrieve patients linked to a doctor
-    get_doctor_reports               # Retrieve analytics/reports for a doctor
+    get_doctor_reports,              # Retrieve analytics/reports for a doctor
+    doctor_email_exists              # Check if a doctor email is already used
 )
 
 # Middleware used for authentication and role-based access control
@@ -58,7 +59,8 @@ def get_doctors():
         return jsonify(doctors), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Loading public doctors failed: %s", str(e))
+        return jsonify({"error": "Unable to load doctors right now"}), 500
 
 
 # ===================================================
@@ -86,7 +88,8 @@ def get_doctors_admin():
         return jsonify(doctors), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Loading admin doctors failed: %s", str(e))
+        return jsonify({"error": "Unable to load doctors right now"}), 500
 
 
 # ===================================================
@@ -108,6 +111,9 @@ def add_doctor():
         specialty = data["specialty"]
         email = data["email"]
         password = data["password"]
+
+        if doctor_email_exists(email):
+            return jsonify({"error": "A doctor with this email already exists"}), 400
 
         # Hash the password using bcrypt before storing it in the database
         hashed_password = bcrypt.hashpw(
@@ -132,7 +138,8 @@ def add_doctor():
         return jsonify({"message": "Doctor added successfully"}), 201
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Adding doctor failed: %s", str(e))
+        return jsonify({"error": "Unable to add doctor right now"}), 500
 
 
 # ===================================================
@@ -153,7 +160,8 @@ def delete_doctor(doctor_id):
         return jsonify({"message": "Doctor deleted successfully"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Deleting doctor failed: %s", str(e))
+        return jsonify({"error": "Unable to delete doctor right now"}), 500
 
 
 # ===================================================
@@ -172,6 +180,11 @@ def update_doctor(doctor_id):
 
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        if doctor_email_exists(data["email"], doctor_id):
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "A doctor with this email already exists"}), 400
 
         # Update doctor fields
         cursor.execute("""
@@ -195,7 +208,8 @@ def update_doctor(doctor_id):
         return jsonify({"message": "Doctor updated successfully"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("Updating doctor failed: %s", str(e))
+        return jsonify({"error": "Unable to update doctor right now"}), 500
 
 
 # ===================================================
