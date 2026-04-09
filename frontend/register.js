@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = window.APP_CONFIG?.API_URL || "http://127.0.0.1:5000";
 
 async function registerPatient() {
     // Collect patient registration data from the public sign-up page.

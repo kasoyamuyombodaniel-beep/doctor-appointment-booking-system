@@ -1,5 +1,10 @@
 // @ts-nocheck
 
+/* ===================================================
+   APPOINTMENT DATA LOADERS
+   Fetch appointments for patient, admin, and doctor views
+=================================================== */
+
 async function loadAppointments() {
     try {
         const response = await fetch(`${API_URL}/appointments`, {
@@ -49,6 +54,11 @@ async function loadDoctorAppointments() {
     }
 }
 
+/* ===================================================
+   DERIVED DASHBOARD CONTENT
+   Transform API payloads into counters, inbox items, and overview cards
+=================================================== */
+
 function derivePatientContent() {
     // Convert raw appointments into inbox previews, activity items, and card counters.
     const sortedAppointments = [...patientAppointments].sort(compareAppointmentDateTime);
@@ -69,7 +79,7 @@ function derivePatientContent() {
     }));
 
     setText("statTotal", patientAppointments.filter(isUpcomingAppointment).length);
-    setText("statPending", inboxMessages.filter(message => message.unread).length);
+    setText("statPending", patientAppointments.filter(item => item.status === "PENDING").length);
     setText("statApproved", patientAppointments.filter(item => item.status === "APPROVED").length);
     setText("statRejected", patientAppointments.filter(item => item.status === "REJECTED").length);
     setText("notificationCounter", inboxMessages.filter(message => message.unread).length);
@@ -77,6 +87,11 @@ function derivePatientContent() {
     renderInbox(inboxMessages);
     renderMedicalRecords(medicalRecords);
 }
+
+/* ===================================================
+   PATIENT MEDICAL RECORDS
+   Load and normalize the records shown in the patient portal
+=================================================== */
 
 async function loadPatientMedicalRecords() {
     // Medical records are only visible to patients and are fetched on demand.
@@ -108,25 +123,26 @@ async function loadPatientMedicalRecords() {
 
 function renderPatientOverview() {
     renderUpcomingAppointments(patientAppointments.filter(isUpcomingAppointment).slice(0, 3));
-    renderRecentMessages(inboxMessages.slice(0, 3));
+    renderPatientStatusOverview(patientAppointments);
     renderRecentActivity(recentActivity.slice(0, 4));
 }
 
 function renderAdminDerivedContent() {
+    const pendingAppointments = allAppointments.filter(appointment => appointment.status === "PENDING");
     const pendingCount = allAppointments.filter(appointment => appointment.status === "PENDING").length;
     const approvedCount = allAppointments.filter(appointment => appointment.status === "APPROVED").length;
     const approvalRate = allAppointments.length
         ? Math.round((approvedCount / allAppointments.length) * 100)
         : 0;
 
-    inboxMessages = allAppointments.slice(0, 8).map(appointment => ({
+    inboxMessages = pendingAppointments.slice(0, 8).map(appointment => ({
         id: appointment.id,
         title: `Appointment ${appointment.status.toLowerCase()}`,
         preview: `${appointment.patient_name || "Patient"} with ${appointment.doctor_name || "Doctor"}`,
         content: `${appointment.patient_name || "Patient"} has an appointment with ${appointment.doctor_name || "Doctor"} on ${appointment.appointment_date} at ${appointment.appointment_time}. Current status: ${appointment.status}.`,
         doctorName: appointment.doctor_name || "Doctor",
         createdAt: `${appointment.appointment_date} ${appointment.appointment_time}`,
-        unread: appointment.status === "PENDING"
+        unread: true
     }));
 
     recentActivity = allAppointments.slice(0, 5).map(appointment => ({
@@ -174,7 +190,7 @@ function deriveDoctorContent() {
     inboxMessages = sortedAppointments.map(appointment => ({
         id: appointment.id,
         title: appointment.status === "PENDING" ? "New appointment request" : `Appointment ${appointment.status.toLowerCase()}`,
-        preview: `${appointment.patient_name} · ${appointment.appointment_date} ${appointment.appointment_time}`,
+        preview: `${appointment.patient_name} - ${appointment.appointment_date} ${appointment.appointment_time}`,
         content: `${appointment.patient_name} requested an appointment on ${appointment.appointment_date} at ${appointment.appointment_time}. Current status: ${appointment.status}.`,
         doctorName: appointment.patient_name,
         createdAt: `${appointment.appointment_date} ${appointment.appointment_time}`,
@@ -206,21 +222,18 @@ function deriveDoctorContent() {
     if (currentProfile?.full_name) {
         setText(
             "welcomeText",
-            `Welcome back, Dr. ${normalizeDoctorDisplayName(currentProfile.full_name)}. Doctor ID #${currentProfile.id || decoded.user_id} · ${doctorAppointments.length} appointments`
+            `Welcome back, Dr. ${normalizeDoctorDisplayName(currentProfile.full_name)}. Doctor ID #${currentProfile.id || decoded.user_id} - ${doctorAppointments.length} appointments`
         );
     }
 }
 
+/* ===================================================
+   DOCTOR APPOINTMENT VIEW
+   Delivery summary, doctor table, and calendar widgets
+=================================================== */
+
 function refreshDeliveryPanelFromDoctorAppointment(appointmentId) {
-    if (!appointmentId || !Array.isArray(doctorAppointments)) return;
-
-    const latestAppointment = doctorAppointments.find(item => item.id === appointmentId);
-    if (!latestAppointment) return;
-
-    const latestDetails = parseNotificationDetails(latestAppointment.notification_delivery_details);
-    if (!latestDetails.length) return;
-
-    showDeliveryStatus(latestDetails, "Appointment notification details");
+    return;
 }
 
 function renderDoctorAppointmentTable() {
@@ -257,20 +270,7 @@ function renderDoctorAppointmentTable() {
 }
 
 function buildStoredDeliverySummary(appointment) {
-    const details = parseNotificationDetails(appointment.notification_delivery_details);
-    if (!details.length) return "";
-    const attemptedAt = formatNotificationTimestamp(appointment.status_notified_at);
-
-    return `
-        <div class="inline-delivery-summary">
-            ${details.map(item => `
-                <span class="inline-delivery-chip ${item.sent ? "inline-delivery-ok" : "inline-delivery-fail"}">
-                    ${escapeHtml(item.channel === "email" ? "Email" : "SMS")}: ${escapeHtml(getStoredDeliveryLabel(item))}
-                </span>
-            `).join("")}
-            ${attemptedAt ? `<span class="inline-delivery-time">Last attempt: ${escapeHtml(attemptedAt)}</span>` : ""}
-        </div>
-    `;
+    return "";
 }
 
 function getStoredDeliveryLabel(item) {
@@ -312,6 +312,11 @@ function renderDoctorCalendar() {
         </div>
     `).join("");
 }
+
+/* ===================================================
+   DOCTOR PATIENTS AND REPORTS
+   Search, render, and summarize the doctor's patient/report data
+=================================================== */
 
 async function loadDoctorPatients(searchQuery = "") {
     if (decoded.role !== "doctor") return;
@@ -376,10 +381,6 @@ function paintDoctorPatients(patients) {
     `).join("");
 }
 
-function addPatientFromDoctor() {
-    showToast("Patient self-registration remains the main workflow. This table helps the doctor track assigned patients.", "info");
-}
-
 async function loadDoctorReports() {
     if (decoded.role !== "doctor") return;
 
@@ -392,7 +393,7 @@ async function loadDoctorReports() {
 
         setText("reportNewPatients", reportData.summary?.new_patients || 0);
         setText("reportCompletedAppointments", reportData.summary?.appointments_completed || 0);
-        setText("reportPrescriptions", reportData.summary?.prescriptions_issued || 0);
+        setText("reportPrescriptions", reportData.summary?.pending_requests || 0);
         setText("reportWaitTime", `${reportData.summary?.average_wait_time || 0} min`);
 
         const typeBreakdown = document.getElementById("reportTypeBreakdown");
@@ -401,7 +402,7 @@ async function loadDoctorReports() {
             typeBreakdown.innerHTML = reportTypes.map(item => `
             <div class="report-list-item">
                 <span>${escapeHtml(item.label)}</span>
-                <strong>${escapeHtml(item.value)}</strong>
+                <strong class="report-list-value">${escapeHtml(item.value)}</strong>
             </div>
         `).join("");
         }
@@ -412,7 +413,9 @@ async function loadDoctorReports() {
             reportModules.innerHTML = modules.map(item => `
             <div class="report-list-item">
                 <span>${escapeHtml(item.label)}</span>
-                <strong>${escapeHtml(item.status)}</strong>
+                ${String(item.status || "").toLowerCase() === "ready"
+                    ? `<button class="report-module-button report-module-button-ready" type="button" data-label="${escapeHtml(item.label)}" data-status="${escapeHtml(item.status)}" onclick="handleReportModuleClick(this.dataset.label, this.dataset.status)">Ready</button>`
+                    : `<strong class="report-list-value">${escapeHtml(item.status)}</strong>`}
             </div>
         `).join("");
         }
@@ -421,15 +424,150 @@ async function loadDoctorReports() {
     }
 }
 
+function handleReportModuleClick(label, status) {
+    const normalizedStatus = String(status || "").trim().toLowerCase();
+    if (normalizedStatus !== "ready") return;
+    openReportModuleDetail(label, status);
+}
+
+function openReportModuleDetail(label, status) {
+    const modal = document.getElementById("reportModuleModal");
+    const content = document.getElementById("reportModuleContent");
+    if (!modal || !content) return;
+
+    const moduleDetails = {
+        "Appointment trends": {
+            summary: "Review how appointment demand evolves over time so you can identify busy periods and adjust your schedule.",
+            highlights: [
+                "Track peak booking periods and repeated rush hours.",
+                "Compare pending requests with completed consultations.",
+                "Use demand patterns to refine your weekly availability."
+            ]
+        },
+        "Prescription history": {
+            summary: "Follow the volume of prescriptions linked to your approved appointments and monitor medication workflow activity.",
+            highlights: [
+                "Spot periods with higher prescription output.",
+                "Cross-check treatment activity with completed visits.",
+                "Keep an overview of prescription-related workload."
+            ]
+        },
+        "Diagnosis reports": {
+            summary: "Use diagnosis reporting to organize clinical observations and maintain a clearer overview of patient case trends.",
+            highlights: [
+                "Group frequent diagnosis categories.",
+                "Monitor repeated clinical patterns in your patient base.",
+                "Support better follow-up planning for recurring conditions."
+            ]
+        },
+        "Patient feedback": {
+            summary: "Patient feedback modules help you evaluate service quality, communication clarity, and the overall care experience.",
+            highlights: [
+                "Identify recurring patient satisfaction signals.",
+                "Spot areas where communication can improve.",
+                "Use feedback trends to refine patient experience."
+            ]
+        },
+        "Billing summary": {
+            summary: "Billing summaries provide a lightweight financial snapshot of the care activity associated with your dashboard modules.",
+            highlights: [
+                "Review high-level billing-related activity.",
+                "See how appointment flow can affect financial reporting.",
+                "Keep operational and reporting information aligned."
+            ]
+        },
+        "Custom report creation": {
+            summary: "Custom report creation is the flexible workspace for combining metrics, filters, and focused clinical reporting needs.",
+            highlights: [
+                "Build tailored reports around your workflow priorities.",
+                "Combine appointment, patient, and module data in one view.",
+                "Prepare role-specific summaries for future dashboard expansion."
+            ]
+        }
+    };
+
+    const detail = moduleDetails[label] || {
+        summary: "This report module is available and ready to be explored from the doctor dashboard.",
+        highlights: [
+            "The module is connected to the reporting area.",
+            "It can support doctor-facing workflow visibility.",
+            "You can use it as part of your dashboard review process."
+        ]
+    };
+
+    content.innerHTML = `
+        <div class="report-module-header">
+            <p class="detail-label">Detailed Report Module</p>
+            <h3>${escapeHtml(label)}</h3>
+            <span class="report-module-status-badge">${escapeHtml(status)}</span>
+        </div>
+        <div class="report-module-body">
+            <div class="report-module-summary">
+                <strong>Overview</strong>
+                <p>${escapeHtml(detail.summary)}</p>
+            </div>
+            <div class="report-module-insights">
+                <strong>What this module helps you do</strong>
+                <div class="report-module-points">
+                    ${detail.highlights.map(item => `
+                        <article class="report-module-point">
+                            <span class="report-module-point-marker"></span>
+                            <p>${escapeHtml(item)}</p>
+                        </article>
+                    `).join("")}
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.style.display = "flex";
+}
+
+function closeReportModuleDetail() {
+    const modal = document.getElementById("reportModuleModal");
+    const content = document.getElementById("reportModuleContent");
+    if (content) {
+        content.innerHTML = "";
+    }
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+/* ===================================================
+   APPOINTMENT LIST RENDERING
+   Shared list rendering for patient, admin, and doctor workflows
+=================================================== */
+
 function renderAppointmentsList(appointments) {
     const list = document.getElementById("appointmentsList");
     if (!list) return;
 
     list.innerHTML = "";
-    const filteredAppointments = filterAppointmentsBySearch(appointments, currentSearchQuery);
+    let filteredAppointments = filterAppointmentsBySearch(appointments, currentSearchQuery);
 
     if (!filteredAppointments.length) {
         list.innerHTML = `<div class="empty-message">No appointments found.</div>`;
+        return;
+    }
+
+    if (decoded.role === "patient") {
+        if (currentPatientStatusFilter) {
+            filteredAppointments = filteredAppointments.filter(
+                appointment => appointment.status === currentPatientStatusFilter
+            );
+        }
+
+        if (!filteredAppointments.length) {
+            list.innerHTML = `<div class="empty-message">No appointments found.</div>`;
+            return;
+        }
+
+        renderPatientAppointmentsBoard(
+            list,
+            filteredAppointments,
+            currentPatientStatusFilter ? [currentPatientStatusFilter] : null
+        );
         return;
     }
 
@@ -441,12 +579,193 @@ function renderAppointmentsList(appointments) {
     });
 }
 
+/* ===================================================
+   PATIENT APPOINTMENT BOARDS
+   Status overview cards, grouped columns, and detail modal
+=================================================== */
+
+function renderPatientStatusOverview(appointments) {
+    const container = document.getElementById("recentMessages");
+    if (!container) return;
+
+    const grouped = buildAppointmentGroups(appointments);
+    const sections = [
+        { key: "PENDING", label: "Pending", helper: "Waiting for decision" },
+        { key: "APPROVED", label: "Approved", helper: "Ready to attend" },
+        { key: "REJECTED", label: "Rejected", helper: "Needs another slot" }
+    ];
+
+    container.innerHTML = `
+        <div class="patient-status-grid">
+            ${sections.map(section => `
+                <button class="patient-status-card patient-status-${section.key.toLowerCase()}" type="button" onclick="openPatientAppointmentsByStatus('${section.key}')">
+                    <span class="patient-status-label">${escapeHtml(section.label)}</span>
+                    <strong>${grouped[section.key].length}</strong>
+                    <small>${escapeHtml(section.helper)}</small>
+                </button>
+            `).join("")}
+        </div>
+    `;
+}
+
+function renderPatientAppointmentsBoard(container, appointments, visibleStatuses = null) {
+    const grouped = buildAppointmentGroups(appointments);
+    const allSections = [
+        { key: "APPROVED", label: "Approved Appointments" },
+        { key: "PENDING", label: "Pending Appointments" },
+        { key: "REJECTED", label: "Rejected Appointments" }
+    ];
+    const sections = Array.isArray(visibleStatuses) && visibleStatuses.length
+        ? allSections.filter(section => visibleStatuses.includes(section.key))
+        : allSections;
+
+    container.innerHTML = `
+        <div class="patient-appointments-board">
+            ${sections.map(section => `
+                <section class="patient-appointments-column patient-appointments-${section.key.toLowerCase()}">
+                    <div class="patient-appointments-column-header">
+                        <h4>${escapeHtml(section.label)}</h4>
+                        <span>${grouped[section.key].length}</span>
+                    </div>
+                    <div class="patient-appointments-column-body">
+                        ${grouped[section.key].length
+                            ? grouped[section.key].map(appointment => buildPatientAppointmentCard(appointment)).join("")
+                            : `<div class="empty-message">No ${section.label.toLowerCase()}.</div>`}
+                    </div>
+                </section>
+            `).join("")}
+        </div>
+    `;
+}
+
+function buildPatientAppointmentCard(appointment) {
+    const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
+    const specialty = appointment.doctor_specialty || "General Consultation";
+
+    return `
+        <article class="patient-appointment-card" role="button" tabindex="0" onclick="openAppointmentDetail(${appointment.id})" onkeydown="handleAppointmentCardKeydown(event, ${appointment.id})">
+            <div class="patient-appointment-card-top">
+                <strong>${escapeHtml(doctorName)}</strong>
+                <span class="status ${escapeHtml(appointment.status)}">${formatStatusLabel(appointment.status)}</span>
+            </div>
+            <p class="patient-appointment-specialty">${escapeHtml(specialty)}</p>
+            <p class="appointment-meta"><i class="fa-regular fa-calendar"></i> ${escapeHtml(appointment.appointment_date)}</p>
+            <p class="appointment-meta"><i class="fa-regular fa-clock"></i> ${escapeHtml(appointment.appointment_time)}</p>
+        </article>
+    `;
+}
+
+function buildAppointmentGroups(appointments) {
+    return {
+        APPROVED: appointments.filter(appointment => appointment.status === "APPROVED"),
+        PENDING: appointments.filter(appointment => appointment.status === "PENDING"),
+        REJECTED: appointments.filter(appointment => appointment.status === "REJECTED")
+    };
+}
+
+function openPatientAppointmentsByStatus(status) {
+    if (decoded.role !== "patient") return;
+
+    currentPatientStatusFilter = status || null;
+    currentSearchQuery = "";
+    const searchInput = document.getElementById("appointmentSearch");
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    showSection("appointments");
+    renderAppointmentsList(patientAppointments);
+}
+
+function handleAppointmentCardKeydown(event, appointmentId) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openAppointmentDetail(appointmentId);
+}
+
+function openAppointmentDetail(appointmentId) {
+    if (decoded.role !== "patient") return;
+
+    const appointment = patientAppointments.find(item => item.id === appointmentId);
+    const modal = document.getElementById("appointmentDetailModal");
+    const content = document.getElementById("appointmentDetailContent");
+    if (!appointment || !modal || !content) return;
+
+    const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
+    const specialty = appointment.doctor_specialty || "General Consultation";
+    const deliveryDetails = parseNotificationDetails(appointment.notification_delivery_details);
+
+    content.innerHTML = `
+        <div class="appointment-detail-header">
+            <p class="detail-label">Appointment Detail</p>
+            <h3>${escapeHtml(doctorName)}</h3>
+            <span class="status ${escapeHtml(appointment.status)}">${formatStatusLabel(appointment.status)}</span>
+        </div>
+
+        <div class="appointment-detail-grid">
+            <div class="appointment-detail-card">
+                <span class="detail-label">Specialty</span>
+                <strong>${escapeHtml(specialty)}</strong>
+            </div>
+            <div class="appointment-detail-card">
+                <span class="detail-label">Date</span>
+                <strong>${escapeHtml(appointment.appointment_date)}</strong>
+            </div>
+            <div class="appointment-detail-card">
+                <span class="detail-label">Time</span>
+                <strong>${escapeHtml(appointment.appointment_time)}</strong>
+            </div>
+            <div class="appointment-detail-card">
+                <span class="detail-label">Status</span>
+                <strong>${escapeHtml(formatStatusLabel(appointment.status))}</strong>
+            </div>
+        </div>
+
+        ${deliveryDetails.length ? `
+            <div class="appointment-detail-delivery">
+                <span class="detail-label">Notification Status</span>
+                ${buildStoredDeliverySummary(appointment)}
+            </div>
+        ` : ""}
+
+        <div class="appointment-detail-actions">
+            ${appointment.status !== "REJECTED" ? `
+                <button class="mini-btn" type="button" onclick="closeAppointmentDetail(); rescheduleAppointment(${appointment.id}, ${appointment.doctor_id})">Reschedule</button>
+            ` : ""}
+            ${appointment.status === "PENDING" ? `
+                <button class="mini-btn danger-btn" type="button" onclick="closeAppointmentDetail(); cancelAppointment(${appointment.id})">Cancel</button>
+            ` : ""}
+        </div>
+    `;
+
+    modal.style.display = "flex";
+}
+
+function closeAppointmentDetail() {
+    const modal = document.getElementById("appointmentDetailModal");
+    const content = document.getElementById("appointmentDetailContent");
+    if (content) {
+        content.innerHTML = "";
+    }
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+/* ===================================================
+   APPOINTMENT CARDS AND FILTERS
+   Build markup, search, and status-based filtering
+=================================================== */
+
 function buildAppointmentCardMarkup(appointment) {
     const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
     const specialty = appointment.doctor_specialty || "General Consultation";
     const deliveryDetails = parseNotificationDetails(appointment.notification_delivery_details);
     const patientLine = appointment.patient_name
         ? `<p class="appointment-meta"><i class="fa-regular fa-user"></i> ${escapeHtml(appointment.patient_name)}</p>`
+        : "";
+    const adminScopeLine = decoded.role === "admin"
+        ? `<p class="appointment-meta"><i class="fa-solid fa-hospital-user"></i> Appointment #${escapeHtml(appointment.id)} - ${escapeHtml(appointment.patient_name || "Patient")} with ${escapeHtml(doctorName)}</p>`
         : "";
     const location = `Room ${100 + ((appointment.doctor_id || 1) % 7) * 10 + 2}`;
 
@@ -475,6 +794,7 @@ function buildAppointmentCardMarkup(appointment) {
             <span class="status ${escapeHtml(appointment.status)}">${formatStatusLabel(appointment.status)}</span>
         </div>
         <div class="appointment-record-body">
+            ${adminScopeLine}
             <p class="appointment-meta"><i class="fa-regular fa-calendar"></i> ${escapeHtml(appointment.appointment_date)}</p>
             <p class="appointment-meta"><i class="fa-regular fa-clock"></i> ${escapeHtml(appointment.appointment_time)}</p>
             <p class="appointment-meta"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(location)}</p>
@@ -516,6 +836,11 @@ function filterAppointments(status) {
     renderAppointmentsList(filteredAppointments);
 }
 
+/* ===================================================
+   STATUS UPDATES AND DOCTOR DIRECTORY
+   Approve/reject flows and doctor selection for booking
+=================================================== */
+
 async function updateStatus(appointmentId, newStatus) {
     // Shared status update flow used by doctor and admin appointment actions.
     try {
@@ -534,14 +859,8 @@ async function updateStatus(appointmentId, newStatus) {
             return;
         }
 
-        const notificationSummary = formatNotificationSummary(data.notifications || []);
-        showDeliveryStatus(data.notifications || [], "Appointment notification details");
-        showToast(
-            notificationSummary
-                ? `Appointment ${newStatus.toLowerCase()} successfully. ${notificationSummary}`
-                : `Appointment ${newStatus.toLowerCase()} successfully`,
-            notificationSummary && notificationSummary.toLowerCase().includes("failed") ? "info" : "success"
-        );
+        showDeliveryStatus([], "Appointment notification details");
+        showToast(`Appointment ${newStatus.toLowerCase()} successfully`, "success");
         await loadStats();
 
         if (decoded.role === "admin") {
@@ -592,6 +911,11 @@ async function loadDoctors() {
         console.error("Error loading doctors:", error);
     }
 }
+
+/* ===================================================
+   DOCTOR SLOT PICKER
+   Load availability, select a slot, and track booking state
+=================================================== */
 
 function renderSelectedDoctor(selectElement) {
     const doctorCard = document.getElementById("selectedDoctorCard");
@@ -691,6 +1015,11 @@ async function loadDoctorSlots(doctorId) {
     }
 }
 
+/* ===================================================
+   DATE / NOTIFICATION HELPERS
+   Parse delivery payloads and format timestamps or slot labels
+=================================================== */
+
 function scheduleDoctorNotificationRefresh(appointmentId) {
     window.setTimeout(async () => {
         try {
@@ -768,6 +1097,11 @@ function selectSlot(button, dateValue, timeValue) {
         appointment_time: timeValue
     };
 }
+
+/* ===================================================
+   APPOINTMENT CREATION / DELETION
+   Create, reschedule, cancel, or delete appointments
+=================================================== */
 
 async function createAppointment() {
     const doctorId = document.getElementById("doctorId")?.value;
@@ -875,6 +1209,11 @@ async function deleteAppointmentRequest(appointmentId, showSuccessToast, askConf
     }
 }
 
+/* ===================================================
+   DOCTOR AVAILABILITY
+   Read and persist weekly availability from the doctor settings area
+=================================================== */
+
 async function loadAvailability() {
     if (decoded.role !== "doctor") return;
 
@@ -947,6 +1286,11 @@ async function saveAvailability() {
     }
 }
 
+/* ===================================================
+   ADMIN DOCTOR MANAGEMENT
+   Load, create, update, reset, and delete doctor accounts
+=================================================== */
+
 async function loadAdminDoctors() {
     if (decoded.role !== "admin") return;
 
@@ -966,7 +1310,7 @@ async function loadAdminDoctors() {
                 <div class="management-item">
                     <div class="management-item-body">
                         <strong>${escapeHtml(doctor.full_name)}</strong>
-                        <span>${escapeHtml(doctor.specialty)} · ${escapeHtml(doctor.email)}</span>
+                        <span>${escapeHtml(doctor.specialty)} - ${escapeHtml(doctor.email)}</span>
                     </div>
                     <div class="management-item-actions">
                         <button class="mini-btn" onclick="editDoctor(${doctor.id}, '${escapeText(doctor.full_name)}', '${escapeText(doctor.specialty)}', '${escapeText(doctor.email)}')">Edit</button>
@@ -1071,6 +1415,11 @@ async function deleteDoctor(doctorId) {
     }
 }
 
+/* ===================================================
+   ADMIN PATIENT MANAGEMENT
+   Load, edit, reset, and delete patient accounts
+=================================================== */
+
 async function loadAdminPatients() {
     if (decoded.role !== "admin") return;
 
@@ -1163,7 +1512,7 @@ function editPatient(id, fullName, email, phone) {
 
 function resetPatientForm() {
     editingPatientId = null;
-    setText("patientFormTitle", "Edit Patient");
+    setText("patientFormTitle", "Select Patient");
     setInputValue("patientFullName", "");
     setInputValue("patientEmail", "");
     setInputValue("patientPhone", "");

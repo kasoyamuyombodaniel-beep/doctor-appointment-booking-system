@@ -243,7 +243,7 @@ function getPatientMessageTitle(appointment) {
 
 function getPatientMessagePreview(appointment) {
     const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
-    return `${doctorName} · ${formatStatusLabel(appointment.status)}`;
+    return `${doctorName} - ${formatStatusLabel(appointment.status)}`;
 }
 
 function getPatientMessageContent(appointment) {
@@ -316,21 +316,7 @@ function getNotificationStateDetails(item) {
 }
 
 function formatNotificationSummary(notifications) {
-    if (!notifications.length) return "";
-
-    return notifications.map(item => {
-        if (item.sent) {
-            if (item.channel === "email") return "email sent successfully";
-            if (item.delivery_state === "queued") return "SMS is being processed by the provider";
-            if (item.delivery_state === "delivered") return "SMS delivered successfully";
-            if (item.delivery_state === "sent") return "SMS sent to the mobile network";
-            return "SMS sent successfully";
-        }
-        if (item.reason) {
-            return `${item.channel.toUpperCase()} failed: ${humanizeNotificationReason(item.reason)}`;
-        }
-        return `${item.channel.toUpperCase()} failed`;
-    }).join(" | ");
+    return "";
 }
 
 function humanizeNotificationReason(reason) {
@@ -364,37 +350,8 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
     const panel = document.getElementById("deliveryStatusPanel");
     if (!panel) return;
 
-    if (!notifications.length) {
-        panel.style.display = "none";
-        panel.innerHTML = "";
-        return;
-    }
-
-    panel.style.display = "block";
-    panel.innerHTML = `
-        <div class="delivery-status-header">
-            <strong>${escapeHtml(heading)}</strong>
-            <span>Latest result</span>
-        </div>
-        <div class="delivery-status-list">
-            ${notifications.map(item => {
-                const label = item.channel === "email" ? "Email" : "SMS";
-                const state = getNotificationStateLabel(item);
-                const details = getNotificationStateDetails(item);
-                const target = item.target ? ` Target: ${item.target}` : "";
-
-                return `
-                    <article class="delivery-status-item ${item.sent ? "delivery-status-ok" : "delivery-status-fail"}">
-                        <div>
-                            <p>${escapeHtml(label)}</p>
-                            <strong>${escapeHtml(state)}</strong>
-                        </div>
-                        <span>${escapeHtml(`${details}${target}`)}</span>
-                    </article>
-                `;
-            }).join("")}
-        </div>
-    `;
+    panel.style.display = "none";
+    panel.innerHTML = "";
 }
 
 function activateSettingsTab(button) {

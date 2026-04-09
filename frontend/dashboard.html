@@ -2,6 +2,10 @@
 <html lang="en">
 
 <head>
+    <!-- ===================================================
+         HEAD CONFIGURATION
+         Page metadata, stylesheets, and external icon assets
+    ==================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
@@ -11,7 +15,12 @@
 </head>
 
 <body class="dashboard-page">
+    <!-- ===================================================
+         MAIN LAYOUT
+         Sidebar navigation and dashboard content area
+    ==================================================== -->
     <div class="layout dashboard-layout">
+        <!-- Sidebar navigation with role-aware menu entries -->
         <aside class="sidebar dashboard-sidebar">
             <div class="sidebar-top">
                 <p class="sidebar-eyebrow">Wisdom General Hospital</p>
@@ -31,11 +40,11 @@
                         <i class="fa-solid fa-calendar-check"></i>
                         <span id="navAppointments">Appointments</span>
                     </li>
-                    <li data-section="inbox" onclick="showSection('inbox')">
+                    <li class="patient-doctor-only" data-section="inbox" onclick="showSection('inbox')">
                         <i class="fa-solid fa-envelope-open-text"></i>
                         <span id="navInbox">Inbox</span>
                     </li>
-                    <li data-section="records" onclick="showSection('records')">
+                    <li class="patient-doctor-only" data-section="records" onclick="showSection('records')">
                         <i class="fa-solid fa-file-medical"></i>
                         <span id="navRecords">Medical Records</span>
                     </li>
@@ -59,7 +68,9 @@
             </div>
         </aside>
 
+        <!-- Main dashboard content rendered for the authenticated user -->
         <main class="main-content dashboard-main">
+            <!-- Top bar with title, notifications, and compact user profile -->
             <header class="top-bar dashboard-topbar patient-topbar">
                 <div>
                     <p class="page-kicker">Patient Portal</p>
@@ -81,6 +92,7 @@
                 </div>
             </header>
 
+            <!-- Admin-only command strip for high-level system indicators -->
             <section class="admin-only admin-command-strip">
                 <article class="admin-command-card">
                     <span class="panel-tag admin-tag">System Overview</span>
@@ -103,6 +115,10 @@
                 </article>
             </section>
 
+            <!-- ===================================================
+                 OVERVIEW SECTION
+                 Hero area, stat cards, and summary widgets
+            ==================================================== -->
             <section class="dashboard-section active" data-section-panel="overview">
                 <section class="dashboard-hero-banner">
                     <div class="dashboard-hero-copy">
@@ -185,7 +201,7 @@
                                 <p class="panel-kicker">Recent Messages</p>
                                 <h3 id="messagesPanelTitle">Inbox Preview</h3>
                             </div>
-                            <button class="link-button" type="button" onclick="showSection('inbox')">View All</button>
+                            <button id="messagesPanelAction" class="link-button" type="button" onclick="showSection('inbox')">View All</button>
                         </div>
                         <div id="recentMessages" class="stack-list"></div>
                     </section>
@@ -212,6 +228,10 @@
                 </section>
             </section>
 
+            <!-- ===================================================
+                 APPOINTMENTS SECTION
+                 Booking flow, doctor table, admin filters, and appointment list
+            ==================================================== -->
             <section class="dashboard-section" data-section-panel="appointments">
                 <section class="dashboard-panel appointments-page-panel">
                     <div class="panel-header split-header">
@@ -228,6 +248,7 @@
                         </div>
                     </div>
 
+                    <!-- Patient-only appointment booking flow -->
                     <section class="patient-only booking-area">
                         <div class="appointment-form dashboard-panel patient-panel compact-panel">
                             <div class="panel-header">
@@ -280,11 +301,13 @@
                         </div>
                     </section>
 
+                    <!-- Doctor-only appointment review table -->
                     <section id="doctorSection" class="dashboard-panel doctor-panel compact-panel" style="display:none;">
                         <div class="panel-header">
                             <div>
                                 <p class="panel-kicker">Doctor View</p>
                                 <h3>Doctor Appointments</h3>
+                                <p class="panel-helper">Review pending requests, approve or reject appointments, and follow your daily booking schedule.</p>
                             </div>
                         </div>
 
@@ -308,6 +331,7 @@
                         </div>
                     </section>
 
+                    <!-- Admin-only quick appointment status filters -->
                     <section class="admin-only dashboard-panel admin-panel compact-panel">
                         <div class="panel-header">
                             <div>
@@ -328,19 +352,20 @@
                 </section>
             </section>
 
+            <!-- ===================================================
+                 MY PATIENTS SECTION
+                 Doctor-only patient search and monitoring table
+            ==================================================== -->
             <section class="dashboard-section doctor-only" data-section-panel="my-patients">
                 <section class="dashboard-panel">
                     <div class="panel-header split-header">
                         <div>
                             <p class="panel-kicker">My Patients</p>
                             <h3>Assigned Patients</h3>
+                            <p class="panel-helper">View patients linked to your appointments, search their profiles, and follow recent visit activity.</p>
                         </div>
                         <div class="appointments-header-actions">
                             <input type="text" id="patientSearch" class="search-input" placeholder="Search patients" oninput="filterDoctorPatients()">
-                            <button class="dashboard-primary-btn" type="button" onclick="addPatientFromDoctor()">
-                                <i class="fa-solid fa-user-plus"></i>
-                                <span>Add Patient</span>
-                            </button>
                         </div>
                     </div>
 
@@ -360,13 +385,18 @@
                 </section>
             </section>
 
-            <section class="dashboard-section" data-section-panel="inbox">
+            <!-- ===================================================
+                 INBOX SECTION
+                 Message list and selected message content
+            ==================================================== -->
+            <section class="dashboard-section patient-doctor-only" data-section-panel="inbox">
                 <section class="dashboard-panel inbox-layout">
                     <div class="inbox-list-panel">
                         <div class="panel-header">
                             <div>
                                 <p class="panel-kicker">Inbox</p>
                                 <h3>Messages</h3>
+                                <p class="panel-helper doctor-only">Read appointment-related updates and quickly act on requests that need your decision.</p>
                             </div>
                         </div>
                         <div id="inboxList" class="message-list"></div>
@@ -385,44 +415,70 @@
                 </section>
             </section>
 
-            <section class="dashboard-section" data-section-panel="records">
+            <!-- ===================================================
+                 RECORDS / REPORTS SECTION
+                 Patient records table or doctor analytics modules
+            ==================================================== -->
+            <section class="dashboard-section patient-doctor-only" data-section-panel="records">
                 <section class="dashboard-panel">
-                    <div class="panel-header">
-                        <div>
-                            <p class="panel-kicker" id="recordsKicker">Medical Records</p>
-                            <h3 id="recordsTitle">Your Documents</h3>
+                        <div class="panel-header">
+                            <div>
+                                <p class="panel-kicker" id="recordsKicker">Medical Records</p>
+                                <h3 id="recordsTitle">Your Documents</h3>
+                                <p class="panel-helper doctor-only">Track your clinical activity through patient, appointment, and workflow summary metrics.</p>
+                            </div>
                         </div>
-                    </div>
 
                     <section class="doctor-only doctor-reports-grid">
-                        <div class="stats-container report-stat-grid">
-                            <div class="stat-card total-card">
-                                <span class="stat-label">New Patients</span>
-                                <p id="reportNewPatients">0</p>
+                        <div class="report-intro-card">
+                            <div>
+                                <span class="detail-label">Clinical Reports</span>
+                                <h4>Performance Snapshot</h4>
+                                <p>Use this space to follow patient growth, completed care, pending requests, and overall workflow pace.</p>
                             </div>
-                            <div class="stat-card approved-card">
-                                <span class="stat-label">Appointments Completed</span>
-                                <p id="reportCompletedAppointments">0</p>
-                            </div>
-                            <div class="stat-card pending-card">
-                                <span class="stat-label">Prescriptions Issued</span>
-                                <p id="reportPrescriptions">0</p>
-                            </div>
-                            <div class="stat-card rejected-card">
-                                <span class="stat-label">Average Wait Time</span>
-                                <p id="reportWaitTime">0 min</p>
+                            <div class="report-intro-badge">
+                                <span>Doctor Analytics</span>
                             </div>
                         </div>
 
-                        <div class="settings-info-grid">
-                            <div class="settings-card">
-                                <span class="detail-label">Appointment Type Distribution</span>
-                                <strong>Clinical Mix</strong>
+                        <div class="stats-container report-stat-grid">
+                            <div class="stat-card total-card report-stat-card">
+                                <span class="stat-label">New Patients</span>
+                                <p id="reportNewPatients">0</p>
+                                <small>Patients added through your appointment history.</small>
+                            </div>
+                            <div class="stat-card approved-card report-stat-card">
+                                <span class="stat-label">Appointments Completed</span>
+                                <p id="reportCompletedAppointments">0</p>
+                                <small>Confirmed visits that moved beyond the request stage.</small>
+                            </div>
+                            <div class="stat-card pending-card report-stat-card">
+                                <span class="stat-label">Pending Requests</span>
+                                <p id="reportPrescriptions">0</p>
+                                <small>Appointment requests still waiting for your review or decision.</small>
+                            </div>
+                            <div class="stat-card rejected-card report-stat-card">
+                                <span class="stat-label">Average Wait Time</span>
+                                <p id="reportWaitTime">0 min</p>
+                                <small>Estimated patient delay before treatment or decision.</small>
+                            </div>
+                        </div>
+
+                        <div class="report-panels">
+                            <div class="report-panel report-mix-panel">
+                                <div class="report-panel-head">
+                                    <span class="detail-label">Appointment Type Distribution</span>
+                                    <strong>Clinical Mix</strong>
+                                    <p>See which kinds of appointment activity take the most space in your schedule.</p>
+                                </div>
                                 <div id="reportTypeBreakdown" class="report-list"></div>
                             </div>
-                            <div class="settings-card">
-                                <span class="detail-label">Detailed Reports</span>
-                                <strong>Modules</strong>
+                            <div class="report-panel report-modules-panel">
+                                <div class="report-panel-head">
+                                    <span class="detail-label">Detailed Reports</span>
+                                    <strong>Modules</strong>
+                                    <p>Quickly review the status of the reporting modules connected to your dashboard.</p>
+                                </div>
                                 <div id="reportModules" class="report-list"></div>
                             </div>
                         </div>
@@ -446,6 +502,10 @@
                 </section>
             </section>
 
+            <!-- ===================================================
+                 SETTINGS SECTION
+                 Profile, security, notifications, preferences, and admin tools
+            ==================================================== -->
             <section class="dashboard-section" data-section-panel="settings">
                 <section class="dashboard-panel profile-detail-panel">
                     <div class="panel-header">
@@ -559,11 +619,13 @@
                     <button class="dashboard-primary-btn top-gap" type="button" onclick="handleProfileUpdateClick()">Update Profile</button>
                 </section>
 
+                <!-- Doctor-only availability editor -->
                 <section class="dashboard-panel doctor-only availability-panel">
                     <div class="panel-header">
                         <div>
                             <p class="panel-kicker">Availability</p>
                             <h3>Doctor Working Hours</h3>
+                            <p class="panel-helper">Set the days and time slots when patients are allowed to book appointments with you.</p>
                         </div>
                     </div>
 
@@ -575,11 +637,13 @@
                     </button>
                 </section>
 
+                <!-- Doctor/admin workspace information cards -->
                 <section class="dashboard-panel settings-panel doctor-admin-only">
                     <div class="panel-header">
                         <div>
                             <p class="panel-kicker">Workspace</p>
                             <h3>Preferences</h3>
+                            <p class="panel-helper">Review your current session and local environment details used by the doctor dashboard.</p>
                         </div>
                     </div>
 
@@ -597,6 +661,7 @@
                     </div>
                 </section>
 
+                <!-- Admin-only management area for doctors and patients -->
                 <section class="dashboard-panel admin-management-panel admin-only">
                     <div class="panel-header">
                         <div>
@@ -661,8 +726,32 @@
         </main>
     </div>
 
+    <!-- Modal used to display one appointment in detail -->
+    <div id="appointmentDetailModal" class="appointment-detail-modal" style="display:none;">
+        <div class="appointment-detail-backdrop" onclick="closeAppointmentDetail()"></div>
+        <section class="appointment-detail-dialog">
+            <button class="appointment-detail-close" type="button" onclick="closeAppointmentDetail()" aria-label="Close appointment details">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="appointmentDetailContent"></div>
+        </section>
+    </div>
+
+    <div id="reportModuleModal" class="appointment-detail-modal" style="display:none;">
+        <div class="appointment-detail-backdrop" onclick="closeReportModuleDetail()"></div>
+        <section class="appointment-detail-dialog report-module-dialog">
+            <button class="appointment-detail-close" type="button" onclick="closeReportModuleDetail()" aria-label="Close report module details">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="reportModuleContent"></div>
+        </section>
+    </div>
+
+    <!-- Toast notifications are injected here by the dashboard scripts -->
     <div id="toastContainer" class="toast-container"></div>
+    <!-- Dashboard scripts: chart library, shared logic, data loaders, panels, and bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
     <script src="dashboard-core.js"></script>
     <script src="dashboard-data.js"></script>
     <script src="dashboard-panels.js"></script>

@@ -5,7 +5,7 @@
    API base URL and authentication token
 =================================================== */
 
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = window.APP_CONFIG?.API_URL || "http://127.0.0.1:5000";
 
 /* Retrieve token from browser storage */
 const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -79,6 +79,7 @@ let selectedAppointmentSlot = null;
 
 let currentSearchQuery = "";
 let currentAdminFilter = "ALL";
+let currentPatientStatusFilter = null;
 
 let editingDoctorId = null;
 let editingPatientId = null;
@@ -151,11 +152,31 @@ function configureLayoutForRole() {
 
         setText("overviewTitle", "Administrative overview");
         setText("upcomingPanelTitle", "Priority Appointments");
-        setText("messagesPanelTitle", "Operational Alerts");
+        setText("messagesPanelTitle", "Pending Queue");
         setText("activityPanelTitle", "System Activity");
 
         setText("recordsKicker", "Admin Operations");
         setText("recordsTitle", "Management Center");
+        setText("navSettings", "Management");
+        setText("navInbox", "Hidden");
+        setText("navRecords", "Hidden");
+        setText("messagesPanelAction", "Open Appointments");
+
+        const messagesAction = document.getElementById("messagesPanelAction");
+        if (messagesAction) {
+            messagesAction.onclick = () => showSection("appointments");
+        }
+    }
+
+    if (decoded.role === "patient") {
+        setText("messagesPanelTitle", "Appointment Status");
+        setText("activityPanelTitle", "Recent Activity");
+        setText("messagesPanelAction", "Open Appointments");
+
+        const messagesAction = document.getElementById("messagesPanelAction");
+        if (messagesAction) {
+            messagesAction.onclick = () => showSection("appointments");
+        }
     }
 
 
@@ -165,6 +186,10 @@ function configureLayoutForRole() {
 
     if (decoded.role !== "admin") {
         document.querySelectorAll(".admin-only").forEach(element => {
+            element.style.display = "none";
+        });
+    } else {
+        document.querySelectorAll(".patient-doctor-only").forEach(element => {
             element.style.display = "none";
         });
     }
@@ -342,6 +367,16 @@ function showSection(sectionName) {
         panel.classList.toggle("active", panel.dataset.sectionPanel === sectionName);
     });
 
+    if (sectionName === "appointments") {
+        if (decoded.role === "admin") {
+            loadAllAppointments();
+        } else if (decoded.role === "doctor") {
+            loadDoctorAppointments();
+        } else if (decoded.role === "patient") {
+            loadAppointments();
+        }
+    }
+
     /* Scroll page to top smoothly */
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -420,7 +455,7 @@ async function loadStats() {
         if (decoded.role === "patient") {
 
             setText("statLabelPrimary", "Upcoming Appointments");
-            setText("statLabelSecondary", "Unread Messages");
+            setText("statLabelSecondary", "Pending Appointments");
             setText("statLabelTertiary", "Approved");
             setText("statLabelQuaternary", "Rejected");
 

@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = window.APP_CONFIG?.API_URL || "http://127.0.0.1:5000";
 const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
 if (!token) {
@@ -6,15 +6,22 @@ if (!token) {
 }
 
 function parseJwt(jwtToken) {
-    // Decode the JWT locally so the page can adapt to the current role.
-    const base64 = jwtToken.split(".")[1];
-    const jsonPayload = decodeURIComponent(
-        atob(base64)
-            .split("")
-            .map(char => "%" + ("00" + char.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
-    );
-    return JSON.parse(jsonPayload);
+    try {
+        // Decode the JWT locally so the page can adapt to the current role.
+        const base64 = jwtToken.split(".")[1];
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split("")
+                .map(char => "%" + ("00" + char.charCodeAt(0).toString(16)).slice(-2))
+                .join("")
+        );
+        return JSON.parse(jsonPayload);
+    } catch (error) {
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
+        window.location.href = "login.html";
+        throw error;
+    }
 }
 
 const decoded = parseJwt(token);
@@ -24,7 +31,7 @@ document.getElementById("role").innerText = decoded.role.charAt(0).toUpperCase()
 loadNotifications();
 
 async function loadNotifications() {
-    // Doctors and patients read different appointment feeds on this page.
+    // Doctors, admins, and patients read role-specific appointment feeds on this page.
     try {
         let endpoint = `${API_URL}/appointments`;
 
@@ -32,6 +39,10 @@ async function loadNotifications() {
             endpoint = `${API_URL}/doctor/appointments`;
             document.getElementById("notificationsTitle").innerText = "Doctor Notifications";
             document.getElementById("notificationsSubtitle").innerText = "New patient requests and appointment decisions.";
+        } else if (decoded.role === "admin") {
+            endpoint = `${API_URL}/admin/appointments`;
+            document.getElementById("notificationsTitle").innerText = "Admin Notifications";
+            document.getElementById("notificationsSubtitle").innerText = "System-wide appointment activity, including all pending requests.";
         } else {
             document.getElementById("notificationsTitle").innerText = "Patient Notifications";
             document.getElementById("notificationsSubtitle").innerText = "Approval and rejection updates for your appointments.";
@@ -47,8 +58,13 @@ async function loadNotifications() {
             return;
         }
 
-        latestNotificationItems = Array.isArray(items) ? items : [];
-        renderNotifications(items);
+        const normalizedItems = Array.isArray(items) ? items : [];
+        const visibleItems = decoded.role === "admin"
+            ? normalizedItems.filter(item => item.status === "PENDING")
+            : normalizedItems;
+
+        latestNotificationItems = visibleItems;
+        renderNotifications(visibleItems);
     } catch (error) {
         console.error("Notifications error:", error);
         showToast("Unexpected error while loading notifications", "error");
@@ -90,6 +106,29 @@ function renderNotifications(items) {
             `;
         }
 
+        if (decoded.role === "admin") {
+            const deliveryDetails = parseNotificationDetails(item.notification_delivery_details);
+            const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
+            const noteText = item.status === "PENDING"
+                ? "A patient request is pending review by a doctor."
+                : `This appointment is currently ${item.status.toLowerCase()}.`;
+
+            return `
+                <article class="notification-card">
+                    <div class="notification-icon ${item.status === "APPROVED" ? "approved-note" : item.status === "REJECTED" ? "rejected-note" : "pending-note"}">
+                        <i class="fa-solid fa-hospital-user"></i>
+                    </div>
+                    <div class="notification-content">
+                        <strong>${item.patient_name || "Patient"} with ${item.doctor_name || "Doctor"}</strong>
+                        <p>${noteText}</p>
+                        <small>${item.appointment_date} at ${item.appointment_time}</small>
+                        ${renderStoredDeliveryDetails(deliveryDetails)}
+                        ${attemptedAt ? `<small class="delivery-attempt-time">Last notification attempt: ${attemptedAt}</small>` : ""}
+                    </div>
+                </article>
+            `;
+        }
+
         const noteText = item.status === "PENDING"
             ? "Your appointment request is still pending."
             : `Your appointment was ${item.status.toLowerCase()}.`;
@@ -126,17 +165,7 @@ function parseNotificationDetails(rawValue) {
 }
 
 function renderStoredDeliveryDetails(items) {
-    if (!items.length) return "";
-
-    return `
-        <div class="inline-delivery-summary">
-            ${items.map(item => `
-                <span class="inline-delivery-chip ${item.sent ? "inline-delivery-ok" : "inline-delivery-fail"}">
-                    ${item.channel === "email" ? "Email" : "SMS"}: ${item.sent ? (item.delivery_state === "queued" ? "Queued" : "Sent") : "Failed"}
-                </span>
-            `).join("")}
-        </div>
-    `;
+    return "";
 }
 
 function formatNotificationTimestamp(rawValue) {
@@ -173,14 +202,8 @@ async function updateNotificationStatus(appointmentId, status) {
             return;
         }
 
-        const notificationSummary = formatNotificationSummary(data.notifications || []);
-        showDeliveryStatus(data.notifications || [], "Appointment notification details");
-        showToast(
-            notificationSummary
-                ? `Appointment ${status.toLowerCase()} successfully. ${notificationSummary}`
-                : `Appointment ${status.toLowerCase()} successfully`,
-            notificationSummary && notificationSummary.toLowerCase().includes("failed") ? "info" : "success"
-        );
+        showDeliveryStatus([], "Appointment notification details");
+        showToast(`Appointment ${status.toLowerCase()} successfully`, "success");
         await loadNotifications();
         scheduleNotificationsRefresh(appointmentId);
     } catch (error) {
@@ -201,15 +224,7 @@ function scheduleNotificationsRefresh(appointmentId) {
 }
 
 function refreshDeliveryPanelFromNotifications(appointmentId) {
-    if (!appointmentId || !Array.isArray(latestNotificationItems)) return;
-
-    const latestAppointment = latestNotificationItems.find(item => item.id === appointmentId);
-    if (!latestAppointment) return;
-
-    const latestDetails = parseNotificationDetails(latestAppointment.notification_delivery_details);
-    if (!latestDetails.length) return;
-
-    showDeliveryStatus(latestDetails, "Appointment notification details");
+    return;
 }
 
 function logout() {
@@ -235,59 +250,14 @@ function showToast(message, type = "info") {
 }
 
 function formatNotificationSummary(notifications) {
-    // Summarize which notification channels succeeded or failed.
-    if (!notifications.length) return "";
-
-    return notifications.map(item => {
-        if (item.sent) {
-            if (item.channel === "email") return "email sent successfully";
-            if (item.delivery_state === "queued") return "SMS is being processed by the provider";
-            if (item.delivery_state === "delivered") return "SMS delivered successfully";
-            if (item.delivery_state === "sent") return "SMS sent to the mobile network";
-            return "SMS sent successfully";
-        }
-        if (item.reason) {
-            return `${item.channel.toUpperCase()} failed: ${humanizeNotificationReason(item.reason)}`;
-        }
-        return `${item.channel.toUpperCase()} failed`;
-    }).join(" | ");
+    return "";
 }
 
 function showDeliveryStatus(notifications, heading = "Notification delivery details") {
     const panel = document.getElementById("deliveryStatusPanel");
     if (!panel) return;
-
-    if (!notifications.length) {
-        panel.style.display = "none";
-        panel.innerHTML = "";
-        return;
-    }
-
-    panel.style.display = "block";
-    panel.innerHTML = `
-        <div class="delivery-status-header">
-            <strong>${heading}</strong>
-            <span>Latest result</span>
-        </div>
-        <div class="delivery-status-list">
-            ${notifications.map(item => {
-                const label = item.channel === "email" ? "Email" : "SMS";
-                const state = getNotificationStateLabel(item);
-                const details = getNotificationStateDetails(item);
-                const target = item.target ? ` Target: ${item.target}` : "";
-
-                return `
-                    <article class="delivery-status-item ${item.sent ? "delivery-status-ok" : "delivery-status-fail"}">
-                        <div>
-                            <p>${label}</p>
-                            <strong>${state}</strong>
-                        </div>
-                        <span>${details}${target}</span>
-                    </article>
-                `;
-            }).join("")}
-        </div>
-    `;
+    panel.style.display = "none";
+    panel.innerHTML = "";
 }
 
 function getNotificationStateLabel(item) {
