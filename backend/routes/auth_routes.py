@@ -205,8 +205,11 @@ def forgot_password():
 
         if account_exists:
             token = create_password_reset_token(email)
-            base_url = current_app.config.get("FRONTEND_URL") or request.host_url.rstrip("/")
-            reset_link = f"{base_url}/reset-password?token={token}"
+            base_url = (current_app.config.get("FRONTEND_URL") or request.host_url.rstrip("/")).rstrip("/")
+            if base_url.endswith(".html"):
+                reset_link = f"{base_url}?token={token}"
+            else:
+                reset_link = f"{base_url}/reset-password.html?token={token}"
 
             email_sent = send_password_reset_email(email, reset_link)
             if not email_sent:

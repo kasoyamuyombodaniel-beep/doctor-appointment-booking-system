@@ -76,10 +76,20 @@ def _normalize_phone_number(raw_number):
     Removes spaces, symbols and ensures a +countrycode prefix.
     """
     cleaned = re.sub(r"[^\d+]", "", str(raw_number or "").strip())
+    default_country_code = str(
+        current_app.config.get("DEFAULT_PHONE_COUNTRY_CODE") or ""
+    ).strip()
 
     # Convert numbers starting with 00 to + format
     if cleaned.startswith("00"):
         cleaned = f"+{cleaned[2:]}"
+
+    # Convert local numbers using the configured default country code.
+    if cleaned and not cleaned.startswith("+") and default_country_code:
+        normalized_cc = default_country_code if default_country_code.startswith("+") else f"+{default_country_code}"
+        local_number = cleaned[1:] if cleaned.startswith("0") else cleaned
+        if local_number.isdigit():
+            cleaned = f"{normalized_cc}{local_number}"
 
     # If number has no + but seems international, add +
     if cleaned and not cleaned.startswith("+") and cleaned.isdigit() and len(cleaned) >= 11:
@@ -104,11 +114,12 @@ def _build_email_body(payload):
     doctor_name = _format_doctor_name(payload.get("doctor_name"))
 
     # Different guidance depending on appointment status
-    guidance = (
-        "Please arrive on time for your consultation."
-        if status == "APPROVED"
-        else "Please book another available time slot."
-    )
+    if status == "APPROVED":
+        guidance = "Please arrive on time for your consultation."
+    elif status == "REJECTED":
+        guidance = "Please book another available time slot."
+    else:
+        guidance = "Your request is pending review. We will notify you as soon as it is confirmed."
 
     return (
         f"Hello {payload['patient_name']},\n\n"
@@ -146,7 +157,7 @@ def _build_sms_body(payload):
     return (
         f"Your appointment with Dr. {doctor_name} on "
         f"{appointment_day_text}{payload['appointment_date']} at {payload['appointment_time']} "
-        f"has been {payload['status']}."
+        f"is currently {payload['status']}."
     )
 
 
@@ -263,6 +274,15 @@ def send_sms_notification(payload):
         "to": to_number
     }
 
+    current_app.logger.info(
+        "SMS SEND ATTEMPT | from=%s | to=%s | patient=%s | doctor=%s | status=%s",
+        from_number,
+        to_number,
+        payload["patient_name"],
+        payload["doctor_name"],
+        payload["status"]
+    )
+
     # Add delivery callback URL if configured
     if status_callback_url:
         create_kwargs["status_callback"] = status_callback_url
@@ -272,8 +292,9 @@ def send_sms_notification(payload):
 
     # Log SMS sending
     current_app.logger.info(
-        "SMS ACCEPTED | appointment_status=%s | to=%s | patient=%s | doctor=%s | sid=%s | status=%s",
+        "SMS ACCEPTED | appointment_status=%s | from=%s | to=%s | patient=%s | doctor=%s | sid=%s | status=%s",
         payload["status"],
+        from_number,
         to_number,
         payload["patient_name"],
         payload["doctor_name"],

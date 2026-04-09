@@ -50,14 +50,31 @@ def create_new_appointment(current_user_id, current_role):
 
     try:
         # Create the appointment in the database
-        create_appointment(
+        appointment_id = create_appointment(
             current_user_id,  # patient_id extracted from JWT token
             data["doctor_id"],
             data["appointment_date"],
             data["appointment_time"]
         )
 
-        return jsonify({"message": "Appointment created successfully"})
+        details = get_appointment_notification_details(appointment_id)
+        notifications = []
+        if details:
+            notifications = enqueue_status_notifications(appointment_id, {
+                "status": "PENDING",
+                "appointment_day": details["appointment_date"].strftime("%A"),
+                "appointment_date": details["appointment_date"].strftime("%Y-%m-%d"),
+                "appointment_time": str(details["appointment_time"]),
+                "patient_name": details["patient_name"],
+                "patient_email": details.get("patient_email"),
+                "patient_phone": details.get("patient_phone"),
+                "doctor_name": details["doctor_name"]
+            })
+
+        return jsonify({
+            "message": "Appointment created successfully",
+            "notifications": notifications
+        })
 
     # Handle any errors during appointment creation
     except Exception as e:

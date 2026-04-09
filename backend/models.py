@@ -198,6 +198,7 @@ def get_all_patients():
     cursor.execute("""
         SELECT id, full_name, email, phone, role
         FROM patients
+        WHERE role = 'patient'
     """)
 
     patients = cursor.fetchall()
@@ -390,6 +391,12 @@ def doctor_email_exists(email, exclude_doctor_id=None):
 def _normalize_time_value(value):
     if hasattr(value, "strftime"):
         return value.strftime("%H:%M")
+
+    if isinstance(value, timedelta):
+        total_seconds = int(value.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        return f"{hours:02d}:{minutes:02d}"
 
     value_str = str(value)
     if len(value_str) >= 5:
@@ -871,11 +878,14 @@ def create_appointment(patient_id, doctor_id, appointment_date, appointment_time
         VALUES (%s, %s, %s, %s, 'PENDING')
     """, (patient_id, doctor_id, appointment_date, normalized_time))
 
+    appointment_id = insert_cursor.lastrowid
+
     conn.commit()
 
     insert_cursor.close()
     cursor.close()
     conn.close()
+    return appointment_id
 
 
 def get_patient_appointments(patient_id):
@@ -1453,7 +1463,7 @@ def get_doctor_reports(doctor_id):
         SELECT
             COUNT(DISTINCT a.patient_id) AS new_patients,
             SUM(a.status = 'APPROVED') AS appointments_completed,
-            GREATEST(SUM(a.status = 'APPROVED') - 1, 0) AS prescriptions_issued,
+            SUM(a.status = 'PENDING') AS pending_requests,
             CASE
                 WHEN COUNT(*) = 0 THEN 0
                 ELSE 15
@@ -1498,7 +1508,7 @@ def get_doctor_reports(doctor_id):
         "summary": {
             "new_patients": int(summary.get("new_patients") or 0),
             "appointments_completed": int(summary.get("appointments_completed") or 0),
-            "prescriptions_issued": int(summary.get("prescriptions_issued") or 0),
+            "pending_requests": int(summary.get("pending_requests") or 0),
             "average_wait_time": int(summary.get("average_wait_time") or 0),
         },
         "appointment_types": [

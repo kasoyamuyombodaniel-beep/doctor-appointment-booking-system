@@ -55,7 +55,7 @@ def get_patient(patient_id):
 
     patient = get_patient_by_id(patient_id)
 
-    if patient:
+    if patient and patient.get("role") == "patient":
         return jsonify(patient)
 
     return jsonify({"error": "Patient not found"}), 404
@@ -121,7 +121,7 @@ def remove_patient(current_patient_id, current_role, patient_id):
 
     patient = get_patient_by_id(patient_id)
 
-    if patient:
+    if patient and patient.get("role") == "patient":
         delete_patient(patient_id)
         return jsonify({"message": "Patient deleted successfully"})
 
@@ -147,6 +147,9 @@ def edit_patient(current_patient_id, current_role, patient_id):
     patient = get_patient_by_id(patient_id)
 
     if not patient:
+        return jsonify({"error": "Patient not found"}), 404
+
+    if current_role == "admin" and patient.get("role") != "patient":
         return jsonify({"error": "Patient not found"}), 404
 
     data = request.get_json()

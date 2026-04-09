@@ -178,6 +178,9 @@ app.config["TWILIO_AUTH_TOKEN"] = os.getenv("TWILIO_AUTH_TOKEN")
 # Twilio phone number used to send SMS messages
 app.config["TWILIO_PHONE_NUMBER"] = os.getenv("TWILIO_PHONE_NUMBER")
 
+# Optional default country code used to normalize local patient numbers.
+app.config["DEFAULT_PHONE_COUNTRY_CODE"] = os.getenv("DEFAULT_PHONE_COUNTRY_CODE")
+
 # Webhook URL where Twilio sends SMS delivery updates
 app.config["TWILIO_STATUS_CALLBACK_URL"] = os.getenv("TWILIO_STATUS_CALLBACK_URL")
 
