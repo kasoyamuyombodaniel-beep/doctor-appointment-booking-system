@@ -19,6 +19,7 @@ The simplest deployment path for this codebase is:
 Create a hosted MySQL database and keep these values:
 
 - `DB_HOST`
+- `DB_PORT`
 - `DB_USER`
 - `DB_PASSWORD`
 - `DB_NAME`
@@ -45,6 +46,7 @@ Required environment variables:
 
 ```env
 DB_HOST=your-mysql-host
+DB_PORT=3306
 DB_USER=your-mysql-user
 DB_PASSWORD=your-mysql-password
 DB_NAME=doctor_booking_db
