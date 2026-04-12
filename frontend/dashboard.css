@@ -1496,6 +1496,10 @@
 .appointments-card-list {
     display: grid;
     gap: 16px;
+    max-height: 68vh;
+    overflow-y: auto;
+    padding-right: 8px;
+    overscroll-behavior: contain;
 }
 
 .patient-status-grid {
@@ -1602,6 +1606,33 @@
 .patient-appointments-column-body {
     display: grid;
     gap: 12px;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 6px;
+    overscroll-behavior: contain;
+}
+
+.appointments-card-list::-webkit-scrollbar,
+.patient-appointments-column-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.appointments-card-list::-webkit-scrollbar-track,
+.patient-appointments-column-body::-webkit-scrollbar-track {
+    background: #edf4fb;
+    border-radius: 999px;
+}
+
+.appointments-card-list::-webkit-scrollbar-thumb,
+.patient-appointments-column-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #b7cade, #8ea8c2);
+    border-radius: 999px;
+    border: 2px solid #edf4fb;
+}
+
+.appointments-card-list::-webkit-scrollbar-thumb:hover,
+.patient-appointments-column-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #9fb8d1, #7895b2);
 }
 
 .patient-appointment-card {
@@ -3019,5 +3050,12 @@
 
     .dashboard-hero-copy {
         padding: 22px 18px;
+    }
+
+    .appointments-card-list,
+    .patient-appointments-column-body {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
     }
 }
