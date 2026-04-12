@@ -197,7 +197,8 @@ def _send_resend_email(recipient_email, subject, text_body, html_body=None):
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "doctor-appointment-booking-system/1.0"
         },
         method="POST"
     )
