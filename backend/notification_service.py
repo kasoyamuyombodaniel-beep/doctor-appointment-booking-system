@@ -126,11 +126,13 @@ def _build_email_body(payload):
 
     return (
         f"Hello {payload['patient_name']},\n\n"
-        f"Your appointment request with Dr. {doctor_name} on "
-        f"{appointment_day_text}{payload['appointment_date']} at {payload['appointment_time']} "
-        f"has been {status}.\n\n"
+        f"This is an update about your appointment with Dr. {doctor_name}.\n\n"
+        f"Date: {appointment_day_text}{payload['appointment_date']}\n"
+        f"Time: {payload['appointment_time']}\n"
+        f"Status: {status}\n\n"
         f"{guidance}\n\n"
-        "Thank you."
+        "Thank you,\n"
+        "Wisdom Hospital"
     )
 
 
@@ -145,15 +147,53 @@ def _build_password_reset_body(reset_link):
 
 
 def _build_email_html(payload):
-    """Return a lightweight HTML version of the appointment notification."""
-    return (
-        f"<p>Hello {payload['patient_name']},</p>"
-        f"<p>Your appointment request with Dr. {_format_doctor_name(payload.get('doctor_name'))} "
-        f"on {payload['appointment_date']} at {payload['appointment_time']} has been "
-        f"<strong>{payload['status']}</strong>.</p>"
-        f"<p>{_build_email_body(payload).splitlines()[2]}</p>"
-        "<p>Thank you.</p>"
-    )
+    """Return a polished HTML version of the appointment notification."""
+    status = payload["status"]
+    doctor_name = _format_doctor_name(payload.get("doctor_name"))
+    appointment_day = payload.get("appointment_day")
+    appointment_day_text = f"{appointment_day}, " if appointment_day else ""
+
+    if status == "APPROVED":
+        guidance = "Please arrive on time for your consultation."
+        badge_bg = "#e9f7ef"
+        badge_fg = "#1d7b54"
+    elif status == "REJECTED":
+        guidance = "Please book another available time slot."
+        badge_bg = "#fdecef"
+        badge_fg = "#bb4154"
+    else:
+        guidance = "Your request is pending review. We will notify you as soon as it is confirmed."
+        badge_bg = "#fff4df"
+        badge_fg = "#cc8a1b"
+
+    return f"""
+    <div style="background:#f4f8fc;padding:32px 16px;font-family:Arial,sans-serif;color:#163a5d;">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dbe7f2;border-radius:20px;overflow:hidden;box-shadow:0 12px 24px rgba(36,75,120,0.08);">
+            <div style="padding:24px 24px 16px;background:linear-gradient(180deg,#ffffff,#f8fbff);border-bottom:1px solid #e5edf6;">
+                <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#6d87a0;">Wisdom Hospital</p>
+                <h2 style="margin:0;font-size:24px;line-height:1.3;">Appointment Status Update</h2>
+            </div>
+            <div style="padding:24px;">
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">Hello {payload['patient_name']},</p>
+                <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
+                    This is an update about your appointment with <strong>Dr. {doctor_name}</strong>.
+                </p>
+                <div style="display:inline-block;padding:8px 14px;border-radius:999px;background:{badge_bg};color:{badge_fg};font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:18px;">
+                    {status}
+                </div>
+                <div style="border:1px solid #e3ecf4;border-radius:16px;padding:18px;background:#fbfdff;">
+                    <p style="margin:0 0 10px;font-size:14px;"><strong>Date:</strong> {appointment_day_text}{payload['appointment_date']}</p>
+                    <p style="margin:0 0 10px;font-size:14px;"><strong>Time:</strong> {payload['appointment_time']}</p>
+                    <p style="margin:0;font-size:14px;"><strong>Doctor:</strong> Dr. {doctor_name}</p>
+                </div>
+                <p style="margin:18px 0 0;font-size:15px;line-height:1.6;">{guidance}</p>
+            </div>
+            <div style="padding:18px 24px;background:#f8fbff;border-top:1px solid #e5edf6;font-size:13px;color:#6d87a0;">
+                Thank you,<br>Wisdom Hospital
+            </div>
+        </div>
+    </div>
+    """.strip()
 
 
 def _build_password_reset_html(reset_link):
