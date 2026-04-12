@@ -172,6 +172,13 @@ def _send_resend_email(recipient_email, subject, text_body, html_body=None):
     from_email = current_app.config.get("RESEND_FROM_EMAIL")
     from_name = (current_app.config.get("RESEND_FROM_NAME") or "Wisdom Hospital").strip()
 
+    current_app.logger.info(
+        "RESEND CONFIG CHECK | api_key_present=%s | from_email_present=%s | recipient_present=%s",
+        bool(api_key),
+        bool(from_email),
+        bool(recipient_email)
+    )
+
     if not api_key or not from_email or not recipient_email:
         return None
 
