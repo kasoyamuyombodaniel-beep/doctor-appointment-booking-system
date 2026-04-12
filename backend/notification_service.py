@@ -351,6 +351,16 @@ def send_sms_notification(payload):
     # Normalize patient phone number
     to_number = _normalize_phone_number(payload.get("patient_phone"))
 
+    current_app.logger.info(
+        "SMS CONFIG CHECK | sid_present=%s | token_present=%s | from_present=%s | callback_present=%s | raw_phone=%s | normalized_phone=%s",
+        bool(account_sid),
+        bool(auth_token),
+        bool(from_number),
+        bool(status_callback_url),
+        str(payload.get("patient_phone") or ""),
+        to_number
+    )
+
     # Validate Twilio configuration
     if not Client or not account_sid or not auth_token or not from_number:
         return {"channel": "sms", "sent": False, "reason": "SMS not configured"}
