@@ -1,5 +1,9 @@
 // @ts-nocheck
 
+const appointmentStatusRequests = new Set();
+let availabilitySaveInProgress = false;
+let appointmentCreateInProgress = false;
+
 /* ===================================================
    APPOINTMENT DATA LOADERS
    Fetch appointments for patient, admin, and doctor views
@@ -843,9 +847,17 @@ function filterAppointments(status) {
 
 async function updateStatus(appointmentId, newStatus) {
     // Shared status update flow used by doctor and admin appointment actions.
+    const requestKey = `${appointmentId}:${newStatus}`;
+    if (appointmentStatusRequests.has(requestKey)) {
+        showToast("Status update already in progress", "info");
+        return;
+    }
+
+    appointmentStatusRequests.add(requestKey);
     try {
         const response = await fetch(`${API_URL}/appointments/${appointmentId}/status`, {
             method: "PUT",
+            cache: "no-store",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": token
@@ -859,8 +871,16 @@ async function updateStatus(appointmentId, newStatus) {
             return;
         }
 
-        showDeliveryStatus([], "Appointment notification details");
-        showToast(`Appointment ${newStatus.toLowerCase()} successfully`, "success");
+        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+        const notificationSummary = formatNotificationSummary(notifications);
+
+        showDeliveryStatus(notifications, "Appointment notification details");
+        showToast(
+            notificationSummary
+                ? `Appointment ${newStatus.toLowerCase()} successfully. ${notificationSummary}`
+                : `Appointment ${newStatus.toLowerCase()} successfully`,
+            notificationSummary.toLowerCase().includes("failed") ? "info" : "success"
+        );
         await loadStats();
 
         if (decoded.role === "admin") {
@@ -878,6 +898,8 @@ async function updateStatus(appointmentId, newStatus) {
     } catch (error) {
         console.error("Error updating appointment:", error);
         showToast("Unexpected error while updating appointment", "error");
+    } finally {
+        appointmentStatusRequests.delete(requestKey);
     }
 }
 
@@ -952,7 +974,8 @@ async function loadDoctorSlots(doctorId) {
     slotsContainer.innerHTML = `<div class="empty-message">Loading available slots...</div>`;
 
     try {
-        const response = await fetch(`${API_URL}/doctors/${doctorId}/available-slots`, {
+        const response = await fetch(`${API_URL}/doctors/${doctorId}/available-slots?ts=${Date.now()}`, {
+            cache: "no-store",
             headers: { "Authorization": token }
         });
         const slotDays = await response.json();
@@ -1104,15 +1127,22 @@ function selectSlot(button, dateValue, timeValue) {
 =================================================== */
 
 async function createAppointment() {
+    if (appointmentCreateInProgress) {
+        showToast("Appointment creation already in progress", "info");
+        return;
+    }
+
     const doctorId = document.getElementById("doctorId")?.value;
     if (!doctorId || !selectedAppointmentSlot) {
         showToast("Please select a doctor and one available slot", "error");
         return;
     }
 
+    appointmentCreateInProgress = true;
     try {
         const response = await fetch(`${API_URL}/appointments`, {
             method: "POST",
+            cache: "no-store",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": token
@@ -1147,6 +1177,8 @@ async function createAppointment() {
     } catch (error) {
         console.error("Error creating appointment:", error);
         showToast("Unexpected error while creating appointment", "error");
+    } finally {
+        appointmentCreateInProgress = false;
     }
 }
 
@@ -1219,6 +1251,7 @@ async function loadAvailability() {
 
     try {
         const response = await fetch(`${API_URL}/doctor/availability`, {
+            cache: "no-store",
             headers: { "Authorization": token }
         });
         const availability = await response.json();
@@ -1247,6 +1280,10 @@ async function loadAvailability() {
 
 async function saveAvailability() {
     if (decoded.role !== "doctor") return;
+    if (availabilitySaveInProgress) {
+        showToast("Availability save already in progress", "info");
+        return;
+    }
 
     const availability = WEEKDAY_LABELS.map((_, weekday) => {
         const activeInput = document.querySelector(`.availability-active[data-weekday="${weekday}"]`);
@@ -1262,9 +1299,11 @@ async function saveAvailability() {
         };
     });
 
+    availabilitySaveInProgress = true;
     try {
         const response = await fetch(`${API_URL}/doctor/availability`, {
             method: "PUT",
+            cache: "no-store",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": token
@@ -1283,6 +1322,8 @@ async function saveAvailability() {
     } catch (error) {
         console.error("Error saving availability:", error);
         showToast("Unexpected error while saving availability", "error");
+    } finally {
+        availabilitySaveInProgress = false;
     }
 }
 

@@ -316,7 +316,17 @@ function getNotificationStateDetails(item) {
 }
 
 function formatNotificationSummary(notifications) {
-    return "";
+    if (!Array.isArray(notifications) || !notifications.length) return "";
+
+    return notifications.map(item => {
+        const channelLabel = item.channel === "email" ? "Email" : "SMS";
+        if (item.sent) {
+            const state = getNotificationStateLabel(item);
+            return `${channelLabel} ${state.toLowerCase()}`;
+        }
+
+        return `${channelLabel} failed: ${humanizeNotificationReason(item.reason)}`;
+    }).join(" | ");
 }
 
 function humanizeNotificationReason(reason) {
@@ -350,8 +360,37 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
     const panel = document.getElementById("deliveryStatusPanel");
     if (!panel) return;
 
-    panel.style.display = "none";
-    panel.innerHTML = "";
+    if (!Array.isArray(notifications) || !notifications.length) {
+        panel.style.display = "none";
+        panel.innerHTML = "";
+        return;
+    }
+
+    panel.style.display = "block";
+    panel.innerHTML = `
+        <div class="delivery-status-header">
+            <strong>${heading}</strong>
+            <span>Latest result</span>
+        </div>
+        <div class="delivery-status-list">
+            ${notifications.map(item => {
+                const label = item.channel === "email" ? "Email" : "SMS";
+                const state = getNotificationStateLabel(item);
+                const details = getNotificationStateDetails(item);
+                const target = item.target ? ` Target: ${item.target}` : "";
+
+                return `
+                    <article class="delivery-status-item ${item.sent ? "delivery-status-ok" : "delivery-status-fail"}">
+                        <div>
+                            <p>${label}</p>
+                            <strong>${state}</strong>
+                        </div>
+                        <span>${details}${target}</span>
+                    </article>
+                `;
+            }).join("")}
+        </div>
+    `;
 }
 
 function activateSettingsTab(button) {
