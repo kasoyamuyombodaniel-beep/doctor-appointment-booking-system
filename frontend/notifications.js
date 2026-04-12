@@ -332,7 +332,7 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
 function getNotificationStateLabel(item) {
     const state = String(item.delivery_state || item.provider_status || "").toLowerCase();
     if (!item.sent) return "Failed";
-    if (state === "queued" || state === "accepted") return "Sending";
+    if (state === "queued" || state === "accepted") return item.channel === "sms" ? "Sent" : "Sending";
     if (state === "delivered") return "Delivered";
     if (state === "sent") return "Sent";
     return item.channel === "email" ? "Sent" : "Processed";
@@ -342,7 +342,9 @@ function getNotificationStateDetails(item) {
     const state = String(item.delivery_state || item.provider_status || "").toLowerCase();
     if (!item.sent) return humanizeNotificationReason(item.reason);
     if (state === "queued" || state === "accepted") {
-        return "Accepted by provider. The page will refresh shortly with the latest status.";
+        return item.channel === "sms"
+            ? "Accepted by Twilio and handed off for mobile delivery."
+            : "Accepted by provider. The page will refresh shortly with the latest status.";
     }
     if (state === "delivered") {
         return "Confirmed as delivered by the provider.";
