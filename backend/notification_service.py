@@ -219,6 +219,14 @@ def _send_resend_email(recipient_email, subject, text_body, html_body=None):
         raise RuntimeError(f"Resend network error: {error.reason}") from error
 
 
+def _is_resend_configured():
+    """Return True when Resend is configured and should be preferred."""
+    return bool(
+        current_app.config.get("RESEND_API_KEY")
+        and current_app.config.get("RESEND_FROM_EMAIL")
+    )
+
+
 # ===================================================
 # SMS BODY BUILDER
 # ===================================================
@@ -248,25 +256,33 @@ def send_email_notification(payload):
     Send appointment status notification via email.
     """
 
-    resend_result = _send_resend_email(
-        payload.get("patient_email"),
-        _build_email_subject(),
-        _build_email_body(payload),
-        _build_email_html(payload)
-    )
-    if resend_result:
-        current_app.logger.info(
-            "EMAIL SENT VIA RESEND | appointment_status=%s | to=%s | patient=%s | doctor=%s | id=%s",
-            payload["status"],
-            payload["patient_email"],
-            payload["patient_name"],
-            payload["doctor_name"],
-            resend_result.get("provider_id")
+    if _is_resend_configured():
+        resend_result = _send_resend_email(
+            payload.get("patient_email"),
+            _build_email_subject(),
+            _build_email_body(payload),
+            _build_email_html(payload)
         )
+        if resend_result:
+            current_app.logger.info(
+                "EMAIL SENT VIA RESEND | appointment_status=%s | to=%s | patient=%s | doctor=%s | id=%s",
+                payload["status"],
+                payload["patient_email"],
+                payload["patient_name"],
+                payload["doctor_name"],
+                resend_result.get("provider_id")
+            )
+            return {
+                "channel": "email",
+                "sent": True,
+                "target": payload["patient_email"]
+            }
+
         return {
             "channel": "email",
-            "sent": True,
-            "target": payload["patient_email"]
+            "sent": False,
+            "reason": "Resend email sending failed",
+            "target": payload.get("patient_email")
         }
 
     # Get Flask-Mail extension instance
@@ -310,14 +326,14 @@ def send_password_reset_email(recipient_email, reset_link):
     """
     Send a password reset email if email delivery is configured.
     """
-    resend_result = _send_resend_email(
-        recipient_email,
-        _build_password_reset_subject(),
-        _build_password_reset_body(reset_link),
-        _build_password_reset_html(reset_link)
-    )
-    if resend_result:
-        return True
+    if _is_resend_configured():
+        resend_result = _send_resend_email(
+            recipient_email,
+            _build_password_reset_subject(),
+            _build_password_reset_body(reset_link),
+            _build_password_reset_html(reset_link)
+        )
+        return bool(resend_result)
 
     mail = current_app.extensions.get("mail")
     sender = current_app.config.get("MAIL_DEFAULT_SENDER")
