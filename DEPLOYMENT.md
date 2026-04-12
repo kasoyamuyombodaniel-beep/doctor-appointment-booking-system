@@ -67,6 +67,9 @@ MAIL_USERNAME=your-email
 MAIL_PASSWORD=your-app-password
 MAIL_DEFAULT_SENDER=your-email
 MAIL_SENDER_NAME=Wisdom Hospital
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL=notifications@your-domain.com
+RESEND_FROM_NAME=Wisdom Hospital
 TWILIO_ACCOUNT_SID=...
 TWILIO_AUTH_TOKEN=...
 TWILIO_PHONE_NUMBER=...
@@ -97,6 +100,7 @@ Then deploy the full `frontend/` folder to Netlify.
 - `CORS_ALLOWED_ORIGINS` must match your frontend domain exactly
 - The database must accept connections from the backend host
 - If reset-password emails are enabled, `FRONTEND_URL` must point to the live frontend
+- On Render free, prefer `RESEND_API_KEY` + `RESEND_FROM_EMAIL` over SMTP because SMTP ports may be blocked
 
 ## Fastest low-friction path
 

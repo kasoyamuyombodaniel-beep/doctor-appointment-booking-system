@@ -151,6 +151,9 @@ app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 # Email password or app password
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["FRONTEND_URL"] = os.getenv("FRONTEND_URL")
+app.config["RESEND_API_KEY"] = os.getenv("RESEND_API_KEY")
+app.config["RESEND_FROM_EMAIL"] = os.getenv("RESEND_FROM_EMAIL")
+app.config["RESEND_FROM_NAME"] = os.getenv("RESEND_FROM_NAME", "Wisdom Hospital")
 
 
 # Determine sender email and name for outgoing messages

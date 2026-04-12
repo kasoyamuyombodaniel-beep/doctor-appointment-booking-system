@@ -5,6 +5,9 @@
 # Standard libraries
 import os                     # Used to access environment variables
 import re                     # Used for text cleaning (doctor name, phone number)
+import json
+import urllib.request
+import urllib.error
 
 # ThreadPoolExecutor allows notifications to run in background threads
 from concurrent.futures import ThreadPoolExecutor
@@ -141,6 +144,73 @@ def _build_password_reset_body(reset_link):
     )
 
 
+def _build_email_html(payload):
+    """Return a lightweight HTML version of the appointment notification."""
+    return (
+        f"<p>Hello {payload['patient_name']},</p>"
+        f"<p>Your appointment request with Dr. {_format_doctor_name(payload.get('doctor_name'))} "
+        f"on {payload['appointment_date']} at {payload['appointment_time']} has been "
+        f"<strong>{payload['status']}</strong>.</p>"
+        f"<p>{_build_email_body(payload).splitlines()[2]}</p>"
+        "<p>Thank you.</p>"
+    )
+
+
+def _build_password_reset_html(reset_link):
+    """Return a lightweight HTML version of the password reset email."""
+    return (
+        "<p>A password reset was requested for your account.</p>"
+        f"<p>Use this link to choose a new password:<br><a href=\"{reset_link}\">{reset_link}</a></p>"
+        "<p>This link expires in 30 minutes and can only be used once.</p>"
+        "<p>If you did not request this change, you can ignore this email.</p>"
+    )
+
+
+def _send_resend_email(recipient_email, subject, text_body, html_body=None):
+    """Send an email through the Resend HTTP API."""
+    api_key = current_app.config.get("RESEND_API_KEY")
+    from_email = current_app.config.get("RESEND_FROM_EMAIL")
+    from_name = (current_app.config.get("RESEND_FROM_NAME") or "Wisdom Hospital").strip()
+
+    if not api_key or not from_email or not recipient_email:
+        return None
+
+    payload = {
+        "from": f"{from_name} <{from_email}>",
+        "to": [recipient_email],
+        "subject": subject,
+        "text": text_body
+    }
+
+    if html_body:
+        payload["html"] = html_body
+
+    request_obj = urllib.request.Request(
+        url="https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(request_obj, timeout=20) as response:
+            body = response.read().decode("utf-8") if response else ""
+            parsed = json.loads(body) if body else {}
+            return {
+                "sent": True,
+                "provider": "resend",
+                "provider_id": parsed.get("id")
+            }
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode("utf-8", errors="replace") if error.fp else str(error)
+        raise RuntimeError(f"Resend API error: {error.code} {error_body}") from error
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"Resend network error: {error.reason}") from error
+
+
 # ===================================================
 # SMS BODY BUILDER
 # ===================================================
@@ -169,6 +239,27 @@ def send_email_notification(payload):
     """
     Send appointment status notification via email.
     """
+
+    resend_result = _send_resend_email(
+        payload.get("patient_email"),
+        _build_email_subject(),
+        _build_email_body(payload),
+        _build_email_html(payload)
+    )
+    if resend_result:
+        current_app.logger.info(
+            "EMAIL SENT VIA RESEND | appointment_status=%s | to=%s | patient=%s | doctor=%s | id=%s",
+            payload["status"],
+            payload["patient_email"],
+            payload["patient_name"],
+            payload["doctor_name"],
+            resend_result.get("provider_id")
+        )
+        return {
+            "channel": "email",
+            "sent": True,
+            "target": payload["patient_email"]
+        }
 
     # Get Flask-Mail extension instance
     mail = current_app.extensions.get("mail")
@@ -211,6 +302,15 @@ def send_password_reset_email(recipient_email, reset_link):
     """
     Send a password reset email if email delivery is configured.
     """
+    resend_result = _send_resend_email(
+        recipient_email,
+        _build_password_reset_subject(),
+        _build_password_reset_body(reset_link),
+        _build_password_reset_html(reset_link)
+    )
+    if resend_result:
+        return True
+
     mail = current_app.extensions.get("mail")
     sender = current_app.config.get("MAIL_DEFAULT_SENDER")
 
