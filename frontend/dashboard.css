@@ -175,6 +175,12 @@
 .dashboard-topbar {
     margin-bottom: 24px;
     padding: 4px 2px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(245, 248, 252, 0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(208, 220, 233, 0.7);
 }
 
 .page-kicker {
@@ -3128,6 +3134,10 @@
     .dashboard-topbar {
         padding: 18px;
         border-radius: 22px;
+        position: static;
+        top: auto;
+        backdrop-filter: none;
+        border-bottom: none;
     }
 
     .dashboard-hero-copy,
