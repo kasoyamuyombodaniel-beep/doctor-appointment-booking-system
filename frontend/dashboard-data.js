@@ -698,7 +698,6 @@ function openAppointmentDetail(appointmentId) {
 
     const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
     const specialty = appointment.doctor_specialty || "General Consultation";
-    const deliveryDetails = parseNotificationDetails(appointment.notification_delivery_details);
 
     content.innerHTML = `
         <div class="appointment-detail-header">
@@ -725,13 +724,6 @@ function openAppointmentDetail(appointmentId) {
                 <strong>${escapeHtml(formatStatusLabel(appointment.status))}</strong>
             </div>
         </div>
-
-        ${deliveryDetails.length ? `
-            <div class="appointment-detail-delivery">
-                <span class="detail-label">Notification Status</span>
-                ${buildStoredDeliverySummary(appointment)}
-            </div>
-        ` : ""}
 
         <div class="appointment-detail-actions">
             ${appointment.status !== "REJECTED" ? `
@@ -765,7 +757,6 @@ function closeAppointmentDetail() {
 function buildAppointmentCardMarkup(appointment) {
     const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
     const specialty = appointment.doctor_specialty || "General Consultation";
-    const deliveryDetails = parseNotificationDetails(appointment.notification_delivery_details);
     const patientLine = appointment.patient_name
         ? `<p class="appointment-meta"><i class="fa-regular fa-user"></i> ${escapeHtml(appointment.patient_name)}</p>`
         : "";
@@ -805,12 +796,6 @@ function buildAppointmentCardMarkup(appointment) {
             <p class="appointment-meta"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(location)}</p>
             ${patientLine}
         </div>
-        ${deliveryDetails.length ? `
-            <div class="appointment-delivery-block">
-                <span class="appointment-delivery-label">Notification Status</span>
-                ${buildStoredDeliverySummary(appointment)}
-            </div>
-        ` : ""}
         ${actions}
     `;
 }
@@ -872,16 +857,7 @@ async function updateStatus(appointmentId, newStatus) {
             return;
         }
 
-        const notifications = getVisibleNotificationDetails(data.notifications);
-        const notificationSummary = formatNotificationSummary(notifications);
-
-        showDeliveryStatus(notifications, "Appointment notification details");
-        showToast(
-            notificationSummary
-                ? `Appointment ${newStatus.toLowerCase()} successfully. ${notificationSummary}`
-                : `Appointment ${newStatus.toLowerCase()} successfully`,
-            "success"
-        );
+        showToast(`Appointment ${newStatus.toLowerCase()} successfully`, "success");
         renderDoctorAppointmentTable();
 
         if (decoded.role === "admin") {

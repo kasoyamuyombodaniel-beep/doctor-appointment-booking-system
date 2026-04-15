@@ -1,35 +1,69 @@
 const API_URL = window.APP_CONFIG?.API_URL || "http://127.0.0.1:5000";
+let loginInProgress = false;
+let backendWarmupStarted = false;
 
 async function login(){
     // Read the selected role and credentials from the login form.
+    if (loginInProgress) return;
+
     const role = document.getElementById("roleSelect").value;
-    const email = document.getElementById("email").value;
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const rememberMe = document.getElementById("rememberMe")?.checked;
+    const errorNode = document.getElementById("error");
 
-    const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({role, email, password})
-    });
+    if (errorNode) errorNode.innerText = "";
 
-    const data = await response.json();
-
-    if (response.ok){
-        // Keep the token across browser restarts only when "Remember me" is checked.
-        if (rememberMe) {
-            localStorage.setItem("token", data.token);
-        } else {
-            sessionStorage.setItem("token", data.token);
-            localStorage.removeItem("token");
-        }
-        window.location.href = "dashboard.html";
-    } else{
-        document.getElementById("error").innerText = data.error;
-        showToast(data.error || "Login failed", "error");
+    if (!email || !password) {
+        if (errorNode) errorNode.innerText = "Email and password are required";
+        showToast("Email and password are required", "error");
+        return;
     }
+
+    loginInProgress = true;
+    setLoginButtonState(true);
+
+    try {
+        const response = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({role, email, password})
+        });
+
+        const data = await response.json();
+
+        if (response.ok){
+            // Keep the token across browser restarts only when "Remember me" is checked.
+            if (rememberMe) {
+                localStorage.setItem("token", data.token);
+            } else {
+                sessionStorage.setItem("token", data.token);
+                localStorage.removeItem("token");
+            }
+            window.location.href = "dashboard.html";
+        } else {
+            if (errorNode) errorNode.innerText = data.error || "Login failed";
+            showToast(data.error || "Login failed", "error");
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        if (errorNode) errorNode.innerText = "Unable to contact the server";
+        showToast("Unable to contact the server", "error");
+    } finally {
+        loginInProgress = false;
+        setLoginButtonState(false);
+    }
+}
+
+function setLoginButtonState(isLoading) {
+    const button = document.querySelector(".login-button");
+    if (!button) return;
+
+    button.disabled = isLoading;
+    button.classList.toggle("is-loading", isLoading);
+    button.innerText = isLoading ? "Signing in..." : "Sign In";
 }
 
 function togglePasswordVisibility(inputId, button) {
@@ -156,6 +190,16 @@ function initResetPasswordPage() {
     }
 }
 
+function warmBackendConnection() {
+    if (backendWarmupStarted) return;
+    backendWarmupStarted = true;
+
+    fetch(`${API_URL}/`, {
+        method: "GET",
+        cache: "no-store"
+    }).catch(() => {});
+}
+
 
 function showToast(message, type = "info") {
     // Reusable lightweight notification used across the auth screens.
@@ -174,4 +218,7 @@ function showToast(message, type = "info") {
 }
 
 
-document.addEventListener("DOMContentLoaded", initResetPasswordPage);
+document.addEventListener("DOMContentLoaded", () => {
+    initResetPasswordPage();
+    warmBackendConnection();
+});

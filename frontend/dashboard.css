@@ -17,6 +17,7 @@
 
 .dashboard-page {
     min-height: 100vh;
+    overflow-x: hidden;
     background:
         radial-gradient(circle at top left, rgba(153, 193, 255, 0.22), transparent 22%),
         linear-gradient(180deg, #edf4fb 0%, #f5f8fc 100%);
@@ -2551,8 +2552,16 @@
 }
 
 @media (max-width: 640px) {
+    .dashboard-page *,
+    .dashboard-page *::before,
+    .dashboard-page *::after {
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+    }
+
     .dashboard-layout {
         min-height: auto;
+        width: 100%;
     }
 
     .dashboard-sidebar {
@@ -2564,6 +2573,11 @@
 
     .sidebar-nav li {
         width: 100%;
+    }
+
+    .sidebar-nav li span {
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 
     .dashboard-main {
@@ -2594,11 +2608,65 @@
 
     .dashboard-panel {
         padding: 18px 16px;
+        overflow: hidden;
+        backdrop-filter: none;
+    }
+
+    .dashboard-topbar,
+    .stat-card,
+    .simple-card,
+    .message-preview-card,
+    .activity-item,
+    .notification-card {
+        backdrop-filter: none;
     }
 
     .appointments-card-list,
     .notifications-list {
         gap: 12px;
+    }
+
+    .panel-header,
+    .panel-header-row,
+    .split-header,
+    .appointment-record-header,
+    .appointment-meta-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #appointmentsTable {
+        min-width: 640px;
+    }
+
+    .dashboard-hero-banner,
+    .overview-grid,
+    .inbox-layout,
+    .profile-detail-grid,
+    .settings-grid,
+    .management-grid,
+    .dashboard-form-grid,
+    .patient-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .appointment-actions,
+    .management-actions,
+    .management-item-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .appointment-actions .mini-btn,
+    .management-item-actions .mini-btn,
+    .management-actions .mini-btn {
+        width: 100%;
     }
 }
 

@@ -84,8 +84,6 @@ function renderNotifications(items) {
 
     list.innerHTML = items.map(item => {
         if (decoded.role === "doctor") {
-            const deliveryDetails = getVisibleNotificationDetails(item.notification_delivery_details);
-            const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
             const isUpdating = isNotificationStatusPending(item.id);
             return `
                 <article class="notification-card">
@@ -96,8 +94,6 @@ function renderNotifications(items) {
                         <strong>${item.patient_name}</strong>
                         <p>Appointment request for ${item.appointment_date} at ${item.appointment_time}.</p>
                         <span class="status ${item.status}">${item.status}</span>
-                        ${renderStoredDeliveryDetails(deliveryDetails)}
-                        ${attemptedAt ? `<small class="delivery-attempt-time">Last notification attempt: ${attemptedAt}</small>` : ""}
                         ${item.status === "PENDING" ? `
                             <div class="notification-actions">
                                 <button class="action-btn approve-btn" onclick="updateNotificationStatus(${item.id}, 'APPROVED')" ${isUpdating ? "disabled" : ""}>${isUpdating ? "Updating..." : "Approve"}</button>
@@ -110,8 +106,6 @@ function renderNotifications(items) {
         }
 
         if (decoded.role === "admin") {
-            const deliveryDetails = getVisibleNotificationDetails(item.notification_delivery_details);
-            const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
             const noteText = item.status === "PENDING"
                 ? "A patient request is pending review by a doctor."
                 : `This appointment is currently ${item.status.toLowerCase()}.`;
@@ -125,8 +119,6 @@ function renderNotifications(items) {
                         <strong>${item.patient_name || "Patient"} with ${item.doctor_name || "Doctor"}</strong>
                         <p>${noteText}</p>
                         <small>${item.appointment_date} at ${item.appointment_time}</small>
-                        ${renderStoredDeliveryDetails(deliveryDetails)}
-                        ${attemptedAt ? `<small class="delivery-attempt-time">Last notification attempt: ${attemptedAt}</small>` : ""}
                     </div>
                 </article>
             `;
@@ -135,8 +127,6 @@ function renderNotifications(items) {
         const noteText = item.status === "PENDING"
             ? "Your appointment request is still pending."
             : `Your appointment was ${item.status.toLowerCase()}.`;
-        const deliveryDetails = getVisibleNotificationDetails(item.notification_delivery_details);
-        const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
 
         return `
             <article class="notification-card">
@@ -147,8 +137,6 @@ function renderNotifications(items) {
                     <strong>${item.doctor_name || `Doctor #${item.doctor_id}`}</strong>
                     <p>${noteText}</p>
                     <small>${item.appointment_date} at ${item.appointment_time}</small>
-                    ${renderStoredDeliveryDetails(deliveryDetails)}
-                    ${attemptedAt ? `<small class="delivery-attempt-time">Last notification attempt: ${attemptedAt}</small>` : ""}
                 </div>
             </article>
         `;
@@ -165,20 +153,6 @@ function parseNotificationDetails(rawValue) {
     } catch {
         return [];
     }
-}
-
-function renderStoredDeliveryDetails(items) {
-    if (!Array.isArray(items) || !items.length) return "";
-
-    return `
-        <div class="inline-delivery-summary">
-            ${items.map(item => `
-                <span class="inline-delivery-chip ${item.sent ? "inline-delivery-ok" : "inline-delivery-fail"}">
-                    ${item.channel === "email" ? "Email" : "SMS"}: ${getNotificationStateLabel(item)}
-                </span>
-            `).join("")}
-        </div>
-    `;
 }
 
 function formatNotificationTimestamp(rawValue) {
@@ -198,8 +172,7 @@ function formatNotificationTimestamp(rawValue) {
 }
 
 function getVisibleNotificationDetails(rawValue) {
-    const items = Array.isArray(rawValue) ? rawValue : parseNotificationDetails(rawValue);
-    return items.filter(item => String(item?.channel || "").toLowerCase() !== "sms");
+    return [];
 }
 
 function isNotificationStatusPending(appointmentId) {
@@ -233,16 +206,7 @@ async function updateNotificationStatus(appointmentId, status) {
             return;
         }
 
-        const notifications = getVisibleNotificationDetails(data.notifications);
-        const notificationSummary = formatNotificationSummary(notifications);
-
-        showDeliveryStatus(notifications, "Appointment notification details");
-        showToast(
-            notificationSummary
-                ? `Appointment ${status.toLowerCase()} successfully. ${notificationSummary}`
-                : `Appointment ${status.toLowerCase()} successfully`,
-            "success"
-        );
+        showToast(`Appointment ${status.toLowerCase()} successfully`, "success");
         renderNotifications(latestNotificationItems);
         await loadNotifications();
     } catch (error) {
@@ -284,54 +248,15 @@ function showToast(message, type = "info") {
 }
 
 function formatNotificationSummary(notifications) {
-    if (!Array.isArray(notifications) || !notifications.length) return "";
-
-    return notifications.map(item => {
-        const channelLabel = item.channel === "email" ? "Email" : "SMS";
-        if (item.sent) {
-            return `${channelLabel} ${getNotificationStateLabel(item).toLowerCase()}`;
-        }
-
-        return `${channelLabel} failed: ${humanizeNotificationReason(item.reason)}`;
-    }).join(" | ");
+    return "";
 }
 
 function showDeliveryStatus(notifications, heading = "Notification delivery details") {
     const panel = document.getElementById("deliveryStatusPanel");
     if (!panel) return;
 
-    const visibleNotifications = getVisibleNotificationDetails(notifications);
-    if (!visibleNotifications.length) {
-        panel.style.display = "none";
-        panel.innerHTML = "";
-        return;
-    }
-
-    panel.style.display = "block";
-    panel.innerHTML = `
-        <div class="delivery-status-header">
-            <strong>${heading}</strong>
-            <span>Latest result</span>
-        </div>
-        <div class="delivery-status-list">
-            ${visibleNotifications.map(item => {
-                const label = item.channel === "email" ? "Email" : "SMS";
-                const state = getNotificationStateLabel(item);
-                const details = getNotificationStateDetails(item);
-                const target = item.target ? ` Target: ${item.target}` : "";
-
-                return `
-                    <article class="delivery-status-item ${item.sent ? "delivery-status-ok" : "delivery-status-fail"}">
-                        <div>
-                            <p>${label}</p>
-                            <strong>${state}</strong>
-                        </div>
-                        <span>${details}${target}</span>
-                    </article>
-                `;
-            }).join("")}
-        </div>
-    `;
+    panel.style.display = "none";
+    panel.innerHTML = "";
 }
 
 function getNotificationStateLabel(item) {
