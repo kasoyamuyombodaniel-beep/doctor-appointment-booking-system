@@ -68,6 +68,9 @@ def login():
     """Authenticate a user and return a JWT token for the selected role."""
 
     try:
+        # This route supports three login experiences with one endpoint:
+        # patient, admin, and doctor. The selected role decides which table
+        # is queried and what role is embedded in the returned JWT token.
         # Read login credentials from JSON request body
         data = request.get_json()
 
@@ -76,8 +79,8 @@ def login():
             return jsonify({"error": "Request body missing"}), 400
 
         # Extract login data
-        requested_role = data.get("role")
-        email = data.get("email")
+        requested_role = str(data.get("role", "")).strip().lower()
+        email = str(data.get("email", "")).strip().lower()
         password = data.get("password")
 
         # Validate required fields
@@ -92,7 +95,8 @@ def login():
         # PATIENT / ADMIN LOGIN
         # ---------------------------------------------------
         # Patients and admins are stored in the same table
-        # and distinguished by the "role" column.
+        # and distinguished by the "role" column. We therefore check both
+        # the email/password pair and the expected role from the request.
         if requested_role in ["patient", "admin"]:
 
             # Retrieve user by email
@@ -128,7 +132,8 @@ def login():
         # ---------------------------------------------------
         # DOCTOR LOGIN
         # ---------------------------------------------------
-        # Doctors are stored in a separate table
+        # Doctors are stored in a separate table, so doctor login follows
+        # the same verification flow but against the doctors table.
         if requested_role == "doctor":
 
             # Retrieve doctor by email
@@ -204,6 +209,8 @@ def forgot_password():
         account_exists = bool(patient or doctor)
 
         if account_exists:
+            # Only real accounts get a reset token, but we always return the
+            # same public response so attackers cannot discover valid emails.
             token = create_password_reset_token(email)
             base_url = (current_app.config.get("FRONTEND_URL") or request.host_url.rstrip("/")).rstrip("/")
             if base_url.endswith(".html"):
@@ -251,6 +258,8 @@ def reset_password():
         if len(new_password) < 8:
             return jsonify({"error": "Password must be at least 8 characters"}), 400
 
+        # The token is consumed only once. If it is invalid, expired, or
+        # already used, consume_password_reset_token returns no email.
         email = consume_password_reset_token(token)
         if not email:
             return jsonify({"error": "Invalid or expired reset token"}), 400

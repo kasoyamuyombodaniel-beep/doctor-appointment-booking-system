@@ -8,6 +8,7 @@ import hashlib
 import secrets
 from datetime import date, datetime, timedelta # datetime for date and time calculations
 import mysql.connector  # mysql.connector for database communication
+from mysql.connector import pooling
 
 import bcrypt  # bcrypt for secure password hashing
 
@@ -19,23 +20,51 @@ DEFAULT_DOCTOR_AVAILABILITY = {
     4: ("09:00", "17:00"),
 }
 SLOT_INTERVAL_MINUTES = 60
+_DB_POOL = None
 
 
 # ===================================================
 # DATABASE CONFIGURATION
 # ===================================================
 
+def _get_db_config():
+    return {
+        "host": os.getenv("DB_HOST", "localhost"),
+        "port": int(os.getenv("DB_PORT", "3306")),
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASSWORD"),
+        "database": os.getenv("DB_NAME", "doctor_booking_db"),
+    }
+
+
+def _get_db_pool():
+    """
+    Reuse a small MySQL connection pool so request-heavy flows such as login
+    do not pay the full connection setup cost every time.
+    """
+    global _DB_POOL
+
+    if _DB_POOL is None:
+        _DB_POOL = pooling.MySQLConnectionPool(
+            pool_name=os.getenv("DB_POOL_NAME", "doctor_booking_pool"),
+            pool_size=max(1, int(os.getenv("DB_POOL_SIZE", "5"))),
+            pool_reset_session=True,
+            **_get_db_config()
+        )
+
+    return _DB_POOL
+
 def get_db_connection():
     """
     Create and return a new MySQL connection for the application.
     """
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME", "doctor_booking_db")
-    )
+    try:
+        conn = _get_db_pool().get_connection()
+        if not conn.is_connected():
+            conn.reconnect(attempts=1, delay=0)
+        return conn
+    except Exception:
+        return mysql.connector.connect(**_get_db_config())
 
 
 def ensure_password_reset_tokens_table():
