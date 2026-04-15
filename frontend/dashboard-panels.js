@@ -317,10 +317,16 @@ function getNotificationStateDetails(item) {
     return "Delivered to the provider successfully.";
 }
 
-function formatNotificationSummary(notifications) {
-    if (!Array.isArray(notifications) || !notifications.length) return "";
+function getVisibleNotificationDetails(notifications) {
+    if (!Array.isArray(notifications)) return [];
+    return notifications.filter(item => String(item?.channel || "").toLowerCase() !== "sms");
+}
 
-    return notifications.map(item => {
+function formatNotificationSummary(notifications) {
+    const visibleNotifications = getVisibleNotificationDetails(notifications);
+    if (!visibleNotifications.length) return "";
+
+    return visibleNotifications.map(item => {
         const channelLabel = item.channel === "email" ? "Email" : "SMS";
         if (item.sent) {
             const state = getNotificationStateLabel(item);
@@ -362,7 +368,8 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
     const panel = document.getElementById("deliveryStatusPanel");
     if (!panel) return;
 
-    if (!Array.isArray(notifications) || !notifications.length) {
+    const visibleNotifications = getVisibleNotificationDetails(notifications);
+    if (!visibleNotifications.length) {
         panel.style.display = "none";
         panel.innerHTML = "";
         return;
@@ -375,7 +382,7 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
             <span>Latest result</span>
         </div>
         <div class="delivery-status-list">
-            ${notifications.map(item => {
+            ${visibleNotifications.map(item => {
                 const label = item.channel === "email" ? "Email" : "SMS";
                 const state = getNotificationStateLabel(item);
                 const details = getNotificationStateDetails(item);

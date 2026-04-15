@@ -2526,6 +2526,80 @@
     .delivery-status-item span {
         max-width: none;
     }
+
+    .notification-card {
+        flex-direction: column;
+        padding: 16px;
+    }
+
+    .notification-content {
+        min-width: 0;
+    }
+
+    .notification-actions {
+        flex-direction: column;
+    }
+
+    .notification-actions .action-btn {
+        width: 100%;
+    }
+
+    .topbar-profile {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-layout {
+        min-height: auto;
+    }
+
+    .dashboard-sidebar {
+        width: 100%;
+        height: auto;
+        padding: 22px 16px;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .sidebar-nav li {
+        width: 100%;
+    }
+
+    .dashboard-main {
+        padding: 18px 14px 24px;
+    }
+
+    .dashboard-topbar {
+        gap: 12px;
+    }
+
+    .dashboard-topbar h1 {
+        font-size: clamp(1.8rem, 8vw, 2.4rem);
+    }
+
+    .topbar-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .topbar-actions .icon-pill,
+    .topbar-profile {
+        width: 100%;
+    }
+
+    .topbar-profile {
+        justify-content: flex-start;
+    }
+
+    .dashboard-panel {
+        padding: 18px 16px;
+    }
+
+    .appointments-card-list,
+    .notifications-list {
+        gap: 12px;
+    }
 }
 
 /* ===================================================

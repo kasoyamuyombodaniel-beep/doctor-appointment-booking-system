@@ -84,8 +84,9 @@ function renderNotifications(items) {
 
     list.innerHTML = items.map(item => {
         if (decoded.role === "doctor") {
-            const deliveryDetails = parseNotificationDetails(item.notification_delivery_details);
+            const deliveryDetails = getVisibleNotificationDetails(item.notification_delivery_details);
             const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
+            const isUpdating = isNotificationStatusPending(item.id);
             return `
                 <article class="notification-card">
                     <div class="notification-icon pending-note">
@@ -99,8 +100,8 @@ function renderNotifications(items) {
                         ${attemptedAt ? `<small class="delivery-attempt-time">Last notification attempt: ${attemptedAt}</small>` : ""}
                         ${item.status === "PENDING" ? `
                             <div class="notification-actions">
-                                <button class="action-btn approve-btn" onclick="updateNotificationStatus(${item.id}, 'APPROVED')">Approve</button>
-                                <button class="action-btn reject-btn" onclick="updateNotificationStatus(${item.id}, 'REJECTED')">Reject</button>
+                                <button class="action-btn approve-btn" onclick="updateNotificationStatus(${item.id}, 'APPROVED')" ${isUpdating ? "disabled" : ""}>${isUpdating ? "Updating..." : "Approve"}</button>
+                                <button class="action-btn reject-btn" onclick="updateNotificationStatus(${item.id}, 'REJECTED')" ${isUpdating ? "disabled" : ""}>${isUpdating ? "Updating..." : "Reject"}</button>
                             </div>
                         ` : ""}
                     </div>
@@ -109,7 +110,7 @@ function renderNotifications(items) {
         }
 
         if (decoded.role === "admin") {
-            const deliveryDetails = parseNotificationDetails(item.notification_delivery_details);
+            const deliveryDetails = getVisibleNotificationDetails(item.notification_delivery_details);
             const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
             const noteText = item.status === "PENDING"
                 ? "A patient request is pending review by a doctor."
@@ -134,7 +135,7 @@ function renderNotifications(items) {
         const noteText = item.status === "PENDING"
             ? "Your appointment request is still pending."
             : `Your appointment was ${item.status.toLowerCase()}.`;
-        const deliveryDetails = parseNotificationDetails(item.notification_delivery_details);
+        const deliveryDetails = getVisibleNotificationDetails(item.notification_delivery_details);
         const attemptedAt = formatNotificationTimestamp(item.status_notified_at);
 
         return `
@@ -196,6 +197,16 @@ function formatNotificationTimestamp(rawValue) {
     });
 }
 
+function getVisibleNotificationDetails(rawValue) {
+    const items = Array.isArray(rawValue) ? rawValue : parseNotificationDetails(rawValue);
+    return items.filter(item => String(item?.channel || "").toLowerCase() !== "sms");
+}
+
+function isNotificationStatusPending(appointmentId) {
+    return notificationStatusRequests.has(`${appointmentId}:APPROVED`)
+        || notificationStatusRequests.has(`${appointmentId}:REJECTED`);
+}
+
 async function updateNotificationStatus(appointmentId, status) {
     // Doctors can approve or reject directly from the notifications screen.
     const requestKey = `${appointmentId}:${status}`;
@@ -222,7 +233,7 @@ async function updateNotificationStatus(appointmentId, status) {
             return;
         }
 
-        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+        const notifications = getVisibleNotificationDetails(data.notifications);
         const notificationSummary = formatNotificationSummary(notifications);
 
         showDeliveryStatus(notifications, "Appointment notification details");
@@ -230,10 +241,10 @@ async function updateNotificationStatus(appointmentId, status) {
             notificationSummary
                 ? `Appointment ${status.toLowerCase()} successfully. ${notificationSummary}`
                 : `Appointment ${status.toLowerCase()} successfully`,
-            notificationSummary.toLowerCase().includes("failed") ? "info" : "success"
+            "success"
         );
+        renderNotifications(latestNotificationItems);
         await loadNotifications();
-        scheduleNotificationsRefresh(appointmentId);
     } catch (error) {
         console.error("Notification update error:", error);
         showToast("Unexpected error while updating appointment", "error");
@@ -243,14 +254,7 @@ async function updateNotificationStatus(appointmentId, status) {
 }
 
 function scheduleNotificationsRefresh(appointmentId) {
-    window.setTimeout(async () => {
-        try {
-            await loadNotifications();
-            refreshDeliveryPanelFromNotifications(appointmentId);
-        } catch (error) {
-            console.error("Error refreshing notifications:", error);
-        }
-    }, 4000);
+    return;
 }
 
 function refreshDeliveryPanelFromNotifications(appointmentId) {
@@ -296,7 +300,8 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
     const panel = document.getElementById("deliveryStatusPanel");
     if (!panel) return;
 
-    if (!Array.isArray(notifications) || !notifications.length) {
+    const visibleNotifications = getVisibleNotificationDetails(notifications);
+    if (!visibleNotifications.length) {
         panel.style.display = "none";
         panel.innerHTML = "";
         return;
@@ -309,7 +314,7 @@ function showDeliveryStatus(notifications, heading = "Notification delivery deta
             <span>Latest result</span>
         </div>
         <div class="delivery-status-list">
-            ${notifications.map(item => {
+            ${visibleNotifications.map(item => {
                 const label = item.channel === "email" ? "Email" : "SMS";
                 const state = getNotificationStateLabel(item);
                 const details = getNotificationStateDetails(item);

@@ -257,6 +257,7 @@ function renderDoctorAppointmentTable() {
 
     doctorAppointments.forEach(appointment => {
         const row = document.createElement("tr");
+        const isUpdating = isAppointmentStatusPending(appointment.id);
         row.innerHTML = `
             <td>${escapeHtml(appointment.appointment_date)}</td>
             <td>${escapeHtml(appointment.appointment_time)}</td>
@@ -264,8 +265,8 @@ function renderDoctorAppointmentTable() {
             <td class="status ${escapeHtml(appointment.status)}">${formatStatusLabel(appointment.status)}</td>
             <td class="doctor-actions-cell">
                 ${appointment.status === "PENDING" ? `
-                    <button class="action-btn approve-btn" onclick="updateStatus(${appointment.id}, 'APPROVED')">Approve</button>
-                    <button class="action-btn reject-btn" onclick="updateStatus(${appointment.id}, 'REJECTED')">Reject</button>
+                    <button class="action-btn approve-btn" onclick="updateStatus(${appointment.id}, 'APPROVED')" ${isUpdating ? "disabled" : ""}>${isUpdating ? "Updating..." : "Approve"}</button>
+                    <button class="action-btn reject-btn" onclick="updateStatus(${appointment.id}, 'REJECTED')" ${isUpdating ? "disabled" : ""}>${isUpdating ? "Updating..." : "Reject"}</button>
                 ` : buildStoredDeliverySummary(appointment)}
             </td>
         `;
@@ -871,7 +872,7 @@ async function updateStatus(appointmentId, newStatus) {
             return;
         }
 
-        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+        const notifications = getVisibleNotificationDetails(data.notifications);
         const notificationSummary = formatNotificationSummary(notifications);
 
         showDeliveryStatus(notifications, "Appointment notification details");
@@ -879,21 +880,29 @@ async function updateStatus(appointmentId, newStatus) {
             notificationSummary
                 ? `Appointment ${newStatus.toLowerCase()} successfully. ${notificationSummary}`
                 : `Appointment ${newStatus.toLowerCase()} successfully`,
-            notificationSummary.toLowerCase().includes("failed") ? "info" : "success"
+            "success"
         );
-        await loadStats();
+        renderDoctorAppointmentTable();
 
         if (decoded.role === "admin") {
-            await loadAllAppointments();
+            await Promise.all([
+                loadStats(),
+                loadAllAppointments()
+            ]);
             renderAdminDerivedContent();
         } else if (decoded.role === "doctor") {
-            await loadDoctorAppointments();
-            await loadDoctorPatients();
-            await loadDoctorReports();
-            scheduleDoctorNotificationRefresh(appointmentId);
+            await Promise.all([
+                loadStats(),
+                loadDoctorAppointments(),
+                loadDoctorPatients(),
+                loadDoctorReports()
+            ]);
         } else {
-            await loadAppointments();
-            await loadPatientMedicalRecords();
+            await Promise.all([
+                loadStats(),
+                loadAppointments(),
+                loadPatientMedicalRecords()
+            ]);
         }
     } catch (error) {
         console.error("Error updating appointment:", error);
@@ -1044,16 +1053,7 @@ async function loadDoctorSlots(doctorId) {
 =================================================== */
 
 function scheduleDoctorNotificationRefresh(appointmentId) {
-    window.setTimeout(async () => {
-        try {
-            await loadDoctorAppointments();
-            await loadDoctorPatients();
-            await loadDoctorReports();
-            refreshDeliveryPanelFromDoctorAppointment(appointmentId);
-        } catch (error) {
-            console.error("Error refreshing doctor notification state:", error);
-        }
-    }, 4000);
+    return;
 }
 
 function parseNotificationDetails(rawValue) {
@@ -1066,6 +1066,16 @@ function parseNotificationDetails(rawValue) {
     } catch {
         return [];
     }
+}
+
+function getVisibleNotificationDetails(rawValue) {
+    const items = Array.isArray(rawValue) ? rawValue : parseNotificationDetails(rawValue);
+    return items.filter(item => String(item?.channel || "").toLowerCase() !== "sms");
+}
+
+function isAppointmentStatusPending(appointmentId) {
+    return appointmentStatusRequests.has(`${appointmentId}:APPROVED`)
+        || appointmentStatusRequests.has(`${appointmentId}:REJECTED`);
 }
 
 function formatNotificationTimestamp(rawValue) {
