@@ -75,16 +75,22 @@ function renderInbox(messages) {
     openInboxMessage(0, false);
 }
 
+function getDashboardNotificationCount() {
+    if (decoded.role === "patient") {
+        return patientAppointments.length;
+    }
+
+    return inboxMessages.filter(item => item.unread).length;
+}
+
 function openInboxMessage(index, markAsRead = true) {
     const message = inboxMessages[index];
     if (!message) return;
 
     if (markAsRead && message.unread) {
         message.unread = false;
-        setText("notificationCounter", inboxMessages.filter(item => item.unread).length);
-        if (decoded.role === "patient") {
-            setText("statPending", inboxMessages.filter(item => item.unread).length);
-        }
+        setText("notificationCounter", getDashboardNotificationCount());
+        setText("settingsNotificationCount", getDashboardNotificationCount());
         renderInbox(inboxMessages);
         return;
     }

@@ -86,8 +86,8 @@ function derivePatientContent() {
     setText("statPending", patientAppointments.filter(item => item.status === "PENDING").length);
     setText("statApproved", patientAppointments.filter(item => item.status === "APPROVED").length);
     setText("statRejected", patientAppointments.filter(item => item.status === "REJECTED").length);
-    setText("notificationCounter", inboxMessages.filter(message => message.unread).length);
-    setText("settingsNotificationCount", inboxMessages.filter(message => message.unread).length);
+    setText("notificationCounter", getDashboardNotificationCount());
+    setText("settingsNotificationCount", getDashboardNotificationCount());
     renderInbox(inboxMessages);
     renderMedicalRecords(medicalRecords);
 }
