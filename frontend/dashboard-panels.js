@@ -28,7 +28,8 @@ function renderRecentMessages(messages) {
     }
 
     container.innerHTML = messages.map((message, index) => `
-        <button class="message-preview-card" type="button" onclick="openInboxMessage(${index})">
+        <button class="message-preview-card ${message.unread ? "unread" : "read"}" type="button" onclick="openInboxMessage(${index})">
+            <span class="message-state-label">${message.unread ? "Unread" : "Read"}</span>
             <strong>${escapeHtml(message.doctorName)}</strong>
             <p>${escapeHtml(message.preview)}</p>
             <span>${escapeHtml(message.createdAt)}</span>
@@ -65,7 +66,8 @@ function renderInbox(messages) {
     }
 
     list.innerHTML = messages.map((message, index) => `
-        <button class="message-list-item ${message.unread ? "unread" : ""}" type="button" onclick="openInboxMessage(${index})">
+        <button class="message-list-item ${message.unread ? "unread" : "read"}" type="button" onclick="openInboxMessage(${index})">
+            <span class="message-state-label">${message.unread ? "Unread" : "Read"}</span>
             <strong>${escapeHtml(message.doctorName)}</strong>
             <p>${escapeHtml(message.preview)}</p>
             <span>${escapeHtml(message.createdAt)}</span>

@@ -1512,6 +1512,48 @@
     width: 100%;
     text-align: left;
     cursor: pointer;
+    position: relative;
+}
+
+.message-preview-card.unread,
+.message-list-item.unread {
+    border-color: #2f86c7;
+    background: #eef7ff;
+    box-shadow: 0 10px 24px rgba(34, 111, 176, 0.14);
+}
+
+.message-preview-card.read,
+.message-list-item.read {
+    border-color: #e0e8f2;
+    background: #ffffff;
+    opacity: 0.82;
+}
+
+.message-state-label {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-bottom: 8px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #e5eef7;
+    color: #526d86;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.message-preview-card.unread .message-state-label,
+.message-list-item.unread .message-state-label {
+    background: #1f77b8;
+    color: #ffffff;
+}
+
+.message-preview-card.read .message-state-label,
+.message-list-item.read .message-state-label {
+    background: #edf2f6;
+    color: #71879c;
 }
 
 .appointments-page-panel {
@@ -1982,14 +2024,11 @@
     cursor: pointer;
 }
 
-.message-list-item.unread {
-    border-color: #7eb2df;
-    box-shadow: 0 8px 22px rgba(60, 108, 156, 0.1);
-}
-
 .message-list-item.active {
     background: #eef6fd;
     border-color: #8db6da;
+    opacity: 1;
+    box-shadow: inset 4px 0 0 #1f77b8;
 }
 
 .message-list-item strong {
