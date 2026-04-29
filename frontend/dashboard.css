@@ -30,6 +30,8 @@
 
 .dashboard-layout {
     min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -47,13 +49,18 @@
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
+    height: 100dvh;
+    overflow: hidden;
 }
 
 .sidebar-top {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .sidebar-eyebrow {
@@ -120,6 +127,7 @@
     display: grid;
     gap: 14px;
     margin-top: 18px;
+    flex-shrink: 0;
 }
 
 .sidebar-status-card {
@@ -160,6 +168,9 @@
     min-width: 0;
     padding: 34px 34px 40px;
     background: transparent;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
 }
 
 .main-content {
@@ -1222,10 +1233,36 @@
 
     .dashboard-layout {
         flex-direction: column;
+        height: auto;
+        overflow: visible;
     }
 
     .dashboard-sidebar {
         width: auto;
+        height: auto;
+        overflow: visible;
+    }
+
+    .sidebar-top {
+        overflow: visible;
+    }
+
+    .dashboard-main {
+        height: auto;
+        overflow: visible;
+    }
+
+    .inbox-layout {
+        height: auto;
+        min-height: 0;
+    }
+
+    .message-list {
+        max-height: 360px;
+    }
+
+    .message-content {
+        min-height: 260px;
     }
 
     .dashboard-page.patient-view .dashboard-grid {
@@ -2002,16 +2039,26 @@
     display: grid;
     grid-template-columns: 330px minmax(0, 1fr);
     gap: 22px;
+    height: calc(100vh - 164px);
+    height: calc(100dvh - 164px);
+    min-height: 520px;
 }
 
 .inbox-list-panel,
 .inbox-content-panel {
-    min-height: 460px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .message-list {
     display: grid;
     gap: 12px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 6px;
+    align-content: start;
 }
 
 .message-list-item {
@@ -2048,7 +2095,9 @@
 }
 
 .message-content {
-    min-height: 320px;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
     border-radius: 18px;
     border: 1px solid #e3edf6;
     background: #fbfdff;
@@ -3348,6 +3397,11 @@
     .dashboard-sidebar {
         position: static;
         top: auto;
+        height: auto;
+        overflow: visible;
+    }
+
+    .dashboard-main {
         height: auto;
         overflow: visible;
     }
