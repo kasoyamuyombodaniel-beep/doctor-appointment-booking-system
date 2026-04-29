@@ -42,7 +42,7 @@
 
 .dashboard-sidebar {
     width: 300px;
-    padding: 28px 22px;
+    padding: 22px 18px;
     background:
         linear-gradient(180deg, #12365d 0%, #173f6e 60%, #214f86 100%);
     box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
@@ -125,16 +125,21 @@
 
 .sidebar-bottom {
     display: grid;
-    gap: 14px;
-    margin-top: 18px;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 20px;
+    background: rgba(5, 22, 39, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -12px 28px rgba(5, 22, 39, 0.16);
     flex-shrink: 0;
 }
 
 .sidebar-status-card {
-    padding: 18px 18px 16px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .sidebar-status-label {
@@ -157,10 +162,15 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    min-height: 52px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #c83d4d, #a92f42);
-    box-shadow: 0 18px 34px rgba(105, 10, 29, 0.24);
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    border-radius: 14px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #e64f62, #af2f44);
+    box-shadow: 0 12px 24px rgba(105, 10, 29, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-weight: 800;
 }
 
 .dashboard-main {
@@ -3370,7 +3380,6 @@
 }
 
 .dashboard-primary-btn,
-.logout-btn.dashboard-logout-btn,
 .action-btn {
     width: auto;
 }
