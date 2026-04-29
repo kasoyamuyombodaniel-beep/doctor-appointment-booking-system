@@ -526,6 +526,9 @@ def send_status_notifications(payload):
 
 def _is_email_configured(payload):
     """Return True when email can be attempted for this payload."""
+    if _is_resend_configured() and payload.get("patient_email"):
+        return True
+
     mail = current_app.extensions.get("mail")
     sender = current_app.config.get("MAIL_DEFAULT_SENDER")
     return bool(mail and Message and sender and payload.get("patient_email"))

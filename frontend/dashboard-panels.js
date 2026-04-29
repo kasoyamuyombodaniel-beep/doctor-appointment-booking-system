@@ -76,11 +76,20 @@ function renderInbox(messages) {
 }
 
 function getDashboardNotificationCount() {
-    if (decoded.role === "patient") {
-        return patientAppointments.length;
+    return inboxMessages.filter(item => item.unread).length;
+}
+
+function handleNotificationButtonClick() {
+    if (decoded.role === "patient" || decoded.role === "doctor") {
+        showSection("inbox");
+        const unreadIndex = inboxMessages.findIndex(item => item.unread);
+        if (unreadIndex >= 0) {
+            openInboxMessage(unreadIndex);
+        }
+        return;
     }
 
-    return inboxMessages.filter(item => item.unread).length;
+    window.location.href = "notifications.html";
 }
 
 function openInboxMessage(index, markAsRead = true) {
@@ -92,6 +101,7 @@ function openInboxMessage(index, markAsRead = true) {
         setText("notificationCounter", getDashboardNotificationCount());
         setText("settingsNotificationCount", getDashboardNotificationCount());
         renderInbox(inboxMessages);
+        openInboxMessage(index, false);
         return;
     }
 
@@ -325,11 +335,16 @@ function getNotificationStateDetails(item) {
 
 function getVisibleNotificationDetails(notifications) {
     if (!Array.isArray(notifications)) return [];
-    return notifications.filter(item => String(item?.channel || "").toLowerCase() !== "sms");
+    return notifications.filter(item => item && item.channel);
 }
 
 function formatNotificationSummary(notifications) {
-    return "";
+    const items = getVisibleNotificationDetails(Array.isArray(notifications) ? notifications : parseNotificationDetails(notifications));
+    if (!items.length) return "";
+
+    return items
+        .map(item => `${String(item.channel || "").toUpperCase()}: ${getNotificationStateLabel(item)}`)
+        .join(" / ");
 }
 
 function humanizeNotificationReason(reason) {

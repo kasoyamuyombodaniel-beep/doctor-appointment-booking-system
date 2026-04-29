@@ -1801,9 +1801,55 @@
 }
 
 .appointment-detail-delivery {
-    margin-top: 8px;
-    padding-top: 16px;
-    border-top: 1px solid #e3ecf4;
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid #dce8f3;
+    background: #f8fbfe;
+}
+
+.delivery-summary {
+    display: inline-flex;
+    max-width: 260px;
+    color: #456682;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.delivery-muted {
+    color: #7891aa;
+}
+
+.delivery-channel-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.delivery-channel-item {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e1ebf4;
+}
+
+.delivery-channel-item strong {
+    color: #173a60;
+    font-size: 13px;
+}
+
+.delivery-channel-item span {
+    color: #1d7b54;
+    font-weight: 700;
+}
+
+.delivery-channel-item small,
+.appointment-detail-delivery p {
+    color: #5b7792;
+    line-height: 1.5;
 }
 
 .appointment-detail-actions {

@@ -61,9 +61,13 @@ async function loadNotifications() {
         }
 
         const normalizedItems = Array.isArray(items) ? items : [];
-        const visibleItems = decoded.role === "admin"
-            ? normalizedItems.filter(item => item.status === "PENDING")
-            : normalizedItems;
+        let visibleItems = normalizedItems;
+
+        if (decoded.role === "admin" || decoded.role === "doctor") {
+            visibleItems = normalizedItems.filter(item => item.status === "PENDING");
+        } else {
+            visibleItems = normalizedItems.filter(item => item.status === "APPROVED" || item.status === "REJECTED");
+        }
 
         latestNotificationItems = visibleItems;
         renderNotifications(visibleItems);
@@ -78,7 +82,7 @@ function renderNotifications(items) {
     const list = document.getElementById("notificationsList");
 
     if (!items.length) {
-        list.innerHTML = `<div class="empty-message">No notifications found.</div>`;
+        list.innerHTML = `<div class="empty-message">${escapeHtml(getEmptyNotificationMessage())}</div>`;
         return;
     }
 
@@ -91,9 +95,9 @@ function renderNotifications(items) {
                         <i class="fa-solid fa-user-clock"></i>
                     </div>
                     <div class="notification-content">
-                        <strong>${item.patient_name}</strong>
-                        <p>Appointment request for ${item.appointment_date} at ${item.appointment_time}.</p>
-                        <span class="status ${item.status}">${item.status}</span>
+                        <strong>${escapeHtml(item.patient_name || "Patient")}</strong>
+                        <p>Appointment request for ${escapeHtml(item.appointment_date)} at ${escapeHtml(item.appointment_time)}.</p>
+                        <span class="status ${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
                         ${item.status === "PENDING" ? `
                             <div class="notification-actions">
                                 <button class="action-btn approve-btn" onclick="updateNotificationStatus(${item.id}, 'APPROVED')" ${isUpdating ? "disabled" : ""}>${isUpdating ? "Updating..." : "Approve"}</button>
@@ -116,9 +120,9 @@ function renderNotifications(items) {
                         <i class="fa-solid fa-hospital-user"></i>
                     </div>
                     <div class="notification-content">
-                        <strong>${item.patient_name || "Patient"} with ${item.doctor_name || "Doctor"}</strong>
-                        <p>${noteText}</p>
-                        <small>${item.appointment_date} at ${item.appointment_time}</small>
+                        <strong>${escapeHtml(item.patient_name || "Patient")} with ${escapeHtml(item.doctor_name || "Doctor")}</strong>
+                        <p>${escapeHtml(noteText)}</p>
+                        <small>${escapeHtml(item.appointment_date)} at ${escapeHtml(item.appointment_time)}</small>
                     </div>
                 </article>
             `;
@@ -134,13 +138,34 @@ function renderNotifications(items) {
                     <i class="fa-solid fa-bell"></i>
                 </div>
                 <div class="notification-content">
-                    <strong>${item.doctor_name || `Doctor #${item.doctor_id}`}</strong>
-                    <p>${noteText}</p>
-                    <small>${item.appointment_date} at ${item.appointment_time}</small>
+                    <strong>${escapeHtml(item.doctor_name || `Doctor #${item.doctor_id}`)}</strong>
+                    <p>${escapeHtml(noteText)}</p>
+                    <small>${escapeHtml(item.appointment_date)} at ${escapeHtml(item.appointment_time)}</small>
                 </div>
             </article>
         `;
     }).join("");
+}
+
+function getEmptyNotificationMessage() {
+    if (decoded.role === "patient") {
+        return "No appointment decisions yet. Pending requests stay in Appointments.";
+    }
+
+    if (decoded.role === "doctor") {
+        return "No pending patient requests right now.";
+    }
+
+    return "No pending system notifications right now.";
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 function parseNotificationDetails(rawValue) {

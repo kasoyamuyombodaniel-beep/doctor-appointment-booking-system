@@ -66,14 +66,14 @@ async function loadDoctorAppointments() {
 function derivePatientContent() {
     // Convert raw appointments into inbox previews, activity items, and card counters.
     const sortedAppointments = [...patientAppointments].sort(compareAppointmentDateTime);
-    inboxMessages = sortedAppointments.map((appointment, index) => ({
+    inboxMessages = sortedAppointments.map(appointment => ({
         id: appointment.id,
         title: getPatientMessageTitle(appointment),
         preview: getPatientMessagePreview(appointment),
         content: getPatientMessageContent(appointment),
         doctorName: appointment.doctor_name || `Doctor #${appointment.doctor_id}`,
         createdAt: `${appointment.appointment_date} ${appointment.appointment_time}`,
-        unread: appointment.status === "PENDING" && index < 2
+        unread: appointment.status === "APPROVED" || appointment.status === "REJECTED"
     }));
 
     recentActivity = sortedAppointments.slice(0, 5).map(appointment => ({
@@ -275,7 +275,14 @@ function renderDoctorAppointmentTable() {
 }
 
 function buildStoredDeliverySummary(appointment) {
-    return "";
+    const details = parseNotificationDetails(appointment.notification_delivery_details);
+    const summary = formatNotificationSummary(details);
+
+    if (!summary) {
+        return `<span class="delivery-summary delivery-muted">No delivery update yet</span>`;
+    }
+
+    return `<span class="delivery-summary">${escapeHtml(summary)}</span>`;
 }
 
 function getStoredDeliveryLabel(item) {
@@ -698,6 +705,8 @@ function openAppointmentDetail(appointmentId) {
 
     const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
     const specialty = appointment.doctor_specialty || "General Consultation";
+    const deliveryDetails = parseNotificationDetails(appointment.notification_delivery_details);
+    const deliveryMarkup = buildNotificationDeliveryMarkup(deliveryDetails);
 
     content.innerHTML = `
         <div class="appointment-detail-header">
@@ -725,6 +734,8 @@ function openAppointmentDetail(appointmentId) {
             </div>
         </div>
 
+        ${deliveryMarkup}
+
         <div class="appointment-detail-actions">
             ${appointment.status !== "REJECTED" ? `
                 <button class="mini-btn" type="button" onclick="closeAppointmentDetail(); rescheduleAppointment(${appointment.id}, ${appointment.doctor_id})">Reschedule</button>
@@ -736,6 +747,34 @@ function openAppointmentDetail(appointmentId) {
     `;
 
     modal.style.display = "flex";
+}
+
+function buildNotificationDeliveryMarkup(details) {
+    const visibleDetails = getVisibleNotificationDetails(details);
+
+    if (!visibleDetails.length) {
+        return `
+            <div class="appointment-detail-delivery">
+                <span class="detail-label">Notification Delivery</span>
+                <p>No email or SMS delivery update is recorded yet.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="appointment-detail-delivery">
+            <span class="detail-label">Notification Delivery</span>
+            <div class="delivery-channel-list">
+                ${visibleDetails.map(item => `
+                    <div class="delivery-channel-item">
+                        <strong>${escapeHtml(String(item.channel || "").toUpperCase())}</strong>
+                        <span>${escapeHtml(getNotificationStateLabel(item))}</span>
+                        <small>${escapeHtml(getNotificationStateDetails(item))}</small>
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+    `;
 }
 
 function closeAppointmentDetail() {
