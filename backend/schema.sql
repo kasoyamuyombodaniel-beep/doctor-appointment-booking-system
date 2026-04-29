@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS appointments (
     status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
     status_notified_at DATETIME NULL,
     status_notified_value VARCHAR(20) NULL,
+    patient_message_read_at DATETIME NULL,
+    doctor_message_read_at DATETIME NULL,
     notification_delivery_details TEXT NULL,
     sms_message_sid VARCHAR(64) NULL,
     sms_delivery_status VARCHAR(32) NULL,

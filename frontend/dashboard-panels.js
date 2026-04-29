@@ -100,6 +100,7 @@ function openInboxMessage(index, markAsRead = true) {
 
     if (markAsRead && message.unread) {
         message.unread = false;
+        markInboxMessageReadOnServer(message.id);
         setText("notificationCounter", getDashboardNotificationCount());
         setText("settingsNotificationCount", getDashboardNotificationCount());
         renderInbox(inboxMessages);
@@ -113,6 +114,18 @@ function openInboxMessage(index, markAsRead = true) {
 
     setText("selectedMessageTitle", message.title);
     setText("selectedMessageContent", message.content);
+}
+
+function markInboxMessageReadOnServer(appointmentId) {
+    if (!appointmentId || !["patient", "doctor"].includes(decoded.role)) return;
+
+    fetch(`${API_URL}/appointments/${appointmentId}/message-read`, {
+        method: "POST",
+        cache: "no-store",
+        headers: { "Authorization": token }
+    }).catch(error => {
+        console.error("Unable to persist message read state:", error);
+    });
 }
 
 function renderMedicalRecords(records) {

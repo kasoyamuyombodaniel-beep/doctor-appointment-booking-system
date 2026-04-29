@@ -73,7 +73,8 @@ function derivePatientContent() {
         content: getPatientMessageContent(appointment),
         doctorName: appointment.doctor_name || `Doctor #${appointment.doctor_id}`,
         createdAt: `${appointment.appointment_date} ${appointment.appointment_time}`,
-        unread: appointment.status === "APPROVED" || appointment.status === "REJECTED"
+        unread: (appointment.status === "APPROVED" || appointment.status === "REJECTED")
+            && !appointment.patient_message_read_at
     }));
 
     recentActivity = sortedAppointments.slice(0, 5).map(appointment => ({
@@ -198,7 +199,7 @@ function deriveDoctorContent() {
         content: `${appointment.patient_name} requested an appointment on ${appointment.appointment_date} at ${appointment.appointment_time}. Current status: ${appointment.status}.`,
         doctorName: appointment.patient_name,
         createdAt: `${appointment.appointment_date} ${appointment.appointment_time}`,
-        unread: appointment.status === "PENDING"
+        unread: appointment.status === "PENDING" && !appointment.doctor_message_read_at
     }));
 
     recentActivity = sortedAppointments.slice(0, 5).map(appointment => ({

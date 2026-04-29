@@ -17,6 +17,7 @@ from models import (
     get_doctor_available_slots,             # Retrieve available appointment slots for a doctor
     get_appointment_notification_details,   # Get data needed to send notifications
     sync_medical_record_for_appointment,    # Automatically create/update a medical record after approval
+    mark_appointment_message_read,          # Persist read/unread notification state
     update_appointment_sms_delivery_status  # Update SMS delivery status from Twilio webhook
 )
 
@@ -315,6 +316,26 @@ def get_doctor_slots(current_user_id, current_role, doctor_id):
 
     slots = get_doctor_available_slots(doctor_id)
     return jsonify(slots)
+
+
+@appointment_bp.route("/appointments/<int:appointment_id>/message-read", methods=["POST"])
+@token_required
+def mark_message_read(current_user_id, current_role, appointment_id):
+    """Mark an appointment-related dashboard message as read for this account."""
+
+    if current_role not in ["patient", "doctor"]:
+        return jsonify({"error": "Only patients and doctors can mark messages as read"}), 403
+
+    updated = mark_appointment_message_read(
+        appointment_id,
+        current_user_id,
+        current_role
+    )
+
+    if not updated:
+        return jsonify({"error": "Appointment message not found"}), 404
+
+    return jsonify({"message": "Message marked as read"}), 200
 
 
 # ===================================================

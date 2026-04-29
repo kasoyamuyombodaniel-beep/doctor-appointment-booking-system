@@ -188,6 +188,22 @@ def ensure_appointment_notification_columns():
             ADD COLUMN notification_delivery_details TEXT NULL
         """)
 
+    cursor.execute("SHOW COLUMNS FROM appointments LIKE 'patient_message_read_at'")
+    has_patient_message_read_at = cursor.fetchone()
+    if not has_patient_message_read_at:
+        cursor.execute("""
+            ALTER TABLE appointments
+            ADD COLUMN patient_message_read_at DATETIME NULL
+        """)
+
+    cursor.execute("SHOW COLUMNS FROM appointments LIKE 'doctor_message_read_at'")
+    has_doctor_message_read_at = cursor.fetchone()
+    if not has_doctor_message_read_at:
+        cursor.execute("""
+            ALTER TABLE appointments
+            ADD COLUMN doctor_message_read_at DATETIME NULL
+        """)
+
     cursor.execute("SHOW COLUMNS FROM appointments LIKE 'sms_message_sid'")
     has_sms_message_sid = cursor.fetchone()
     if not has_sms_message_sid:
@@ -1007,6 +1023,33 @@ def update_appointment_status_db(appointment_id, status):
     conn.close()
 
 
+def mark_appointment_message_read(appointment_id, user_id, role):
+    """Persist that the visible appointment message was read by this user."""
+    ensure_appointment_notification_columns()
+
+    if role not in {"patient", "doctor"}:
+        return False
+
+    read_column = "patient_message_read_at" if role == "patient" else "doctor_message_read_at"
+    owner_column = "patient_id" if role == "patient" else "doctor_id"
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(f"""
+        UPDATE appointments
+        SET {read_column} = COALESCE({read_column}, NOW())
+        WHERE id = %s
+          AND {owner_column} = %s
+    """, (appointment_id, user_id))
+
+    updated = cursor.rowcount > 0
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return updated
+
+
 def delete_appointment(appointment_id):
     """Remove one appointment from the database."""
     conn = get_db_connection()
@@ -1313,6 +1356,7 @@ def get_doctor_appointments(doctor_id):
             a.appointment_time,
             a.status,
             a.status_notified_at,
+            a.doctor_message_read_at,
             a.notification_delivery_details,
             p.id AS patient_id,
             p.full_name AS patient_name
