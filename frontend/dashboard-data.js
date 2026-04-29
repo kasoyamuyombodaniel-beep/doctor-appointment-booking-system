@@ -161,8 +161,8 @@ function renderAdminDerivedContent() {
     renderRecentActivity(recentActivity);
     renderInbox(inboxMessages);
     renderMedicalRecords([]);
-    setText("notificationCounter", inboxMessages.filter(message => message.unread).length);
-    setText("settingsNotificationCount", inboxMessages.filter(message => message.unread).length);
+    setText("notificationCounter", allAppointments.length);
+    setText("settingsNotificationCount", allAppointments.length);
     setText("adminPendingFocus", pendingCount);
     setText("adminDoctorCount", adminDoctors.length);
     setText("adminPatientCount", adminPatients.length);
@@ -213,8 +213,9 @@ function deriveDoctorContent() {
     renderRecentActivity(recentActivity);
     renderInbox(inboxMessages);
     renderMedicalRecords([]);
-    setText("notificationCounter", inboxMessages.filter(message => message.unread).length);
-    setText("settingsNotificationCount", inboxMessages.filter(message => message.unread).length);
+    const pendingCount = doctorAppointments.filter(item => item.status === "PENDING").length;
+    setText("notificationCounter", pendingCount);
+    setText("settingsNotificationCount", pendingCount);
     setText("statLabelPrimary", "Total Appointments");
     setText("statLabelSecondary", "Pending");
     setText("statLabelTertiary", "Approved");
@@ -1506,10 +1507,9 @@ async function loadAdminPatients() {
                 <div class="management-item">
                     <div class="management-item-body">
                         <strong>${escapeHtml(patient.full_name)}</strong>
-                        <span>${escapeHtml(patient.email)}</span>
+                        <span>${escapeHtml(patient.email)}${patient.phone ? ` - ${escapeHtml(patient.phone)}` : ""}</span>
                     </div>
                     <div class="management-item-actions">
-                        <button class="mini-btn" onclick="editPatient(${patient.id}, '${escapeText(patient.full_name)}', '${escapeText(patient.email)}', '${escapeText(patient.phone || "")}')">Edit</button>
                         <button class="mini-btn danger-btn" onclick="deletePatient(${patient.id})">Delete</button>
                     </div>
                 </div>
@@ -1520,70 +1520,6 @@ async function loadAdminPatients() {
     } catch (error) {
         console.error("Error loading admin patients:", error);
     }
-}
-
-async function submitPatientForm() {
-    if (!editingPatientId) {
-        showToast("New patients must register themselves from the Register page", "info");
-        return;
-    }
-
-    const fullName = document.getElementById("patientFullName")?.value.trim();
-    const email = document.getElementById("patientEmail")?.value.trim();
-    const phone = document.getElementById("patientPhone")?.value.trim();
-    const password = document.getElementById("patientPassword")?.value;
-
-    if (!fullName || !email || !phone) {
-        showToast("Please complete the patient form", "error");
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/patients/${editingPatientId}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token
-            },
-            body: JSON.stringify({
-                full_name: fullName,
-                email,
-                phone,
-                password
-            })
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-            showToast(data.error || "Failed to save patient", "error");
-            return;
-        }
-
-        resetPatientForm();
-        await loadAdminPatients();
-        showToast("Patient updated successfully", "success");
-    } catch (error) {
-        console.error("Error saving patient:", error);
-        showToast("Unexpected error while saving patient", "error");
-    }
-}
-
-function editPatient(id, fullName, email, phone) {
-    editingPatientId = id;
-    setText("patientFormTitle", "Edit Patient");
-    setInputValue("patientFullName", fullName);
-    setInputValue("patientEmail", email);
-    setInputValue("patientPhone", phone);
-    setInputValue("patientPassword", "");
-}
-
-function resetPatientForm() {
-    editingPatientId = null;
-    setText("patientFormTitle", "Select Patient");
-    setInputValue("patientFullName", "");
-    setInputValue("patientEmail", "");
-    setInputValue("patientPhone", "");
-    setInputValue("patientPassword", "");
 }
 
 async function deletePatient(patientId) {
@@ -1601,7 +1537,6 @@ async function deletePatient(patientId) {
             return;
         }
 
-        if (editingPatientId === patientId) resetPatientForm();
         await loadAdminPatients();
         showToast("Patient deleted successfully", "success");
     } catch (error) {

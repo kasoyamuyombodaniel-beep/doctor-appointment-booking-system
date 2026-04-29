@@ -511,7 +511,7 @@
 
                     <div class="account-tabs">
                         <button class="tab-button active" type="button" data-settings-tab="account" onclick="activateSettingsTab(this)">Account Settings</button>
-                        <button class="tab-button" type="button" data-settings-tab="security" onclick="activateSettingsTab(this)">Login & Security</button>
+                        <button class="tab-button" type="button" data-settings-tab="security" onclick="activateSettingsTab(this)">Account Access</button>
                         <button class="tab-button" type="button" data-settings-tab="notifications" onclick="activateSettingsTab(this)">Notifications</button>
                         <button class="tab-button" type="button" data-settings-tab="interface" onclick="activateSettingsTab(this)">Interface</button>
                     </div>
@@ -532,7 +532,7 @@
                             </div>
                             <div class="profile-detail-card">
                                 <span class="detail-label">Email</span>
-                                <strong id="profileDetailEmail">email@example.com</strong>
+                                <strong id="profileDetailEmail">No email loaded</strong>
                             </div>
                             <div class="profile-detail-card">
                                 <span class="detail-label">Phone</span>
@@ -548,24 +548,24 @@
                     <div class="settings-tab-panel" data-settings-panel="security">
                         <div class="settings-info-grid">
                             <div class="settings-card">
-                                <span class="detail-label">Login Email</span>
-                                <strong id="securityEmail">email@example.com</strong>
-                                <p>Your account uses this email address to sign in.</p>
+                                <span class="detail-label">Email Used To Sign In</span>
+                                <strong id="securityEmail">No email loaded</strong>
+                                <p>This is the email you enter on the login page.</p>
                             </div>
                             <div class="settings-card">
                                 <span class="detail-label">Password</span>
-                                <strong>Password protected</strong>
-                                <p>Your password is securely stored with encryption on the backend.</p>
+                                <strong>Protected</strong>
+                                <p>Your password is hidden. Use Update Profile only when you want to change it.</p>
                             </div>
                             <div class="settings-card">
-                                <span class="detail-label">Session</span>
-                                <strong>JWT Active</strong>
-                                <p>Your current login session is active in this browser.</p>
+                                <span class="detail-label">Current Session</span>
+                                <strong>Logged In</strong>
+                                <p>You are currently connected on this browser.</p>
                             </div>
                             <div class="settings-card">
-                                <span class="detail-label">Role Access</span>
+                                <span class="detail-label">Dashboard Type</span>
                                 <strong id="securityRole">Role</strong>
-                                <p>Your permissions are based on the account role used at login.</p>
+                                <p>This role decides which pages and actions you can use.</p>
                             </div>
                         </div>
                     </div>
@@ -573,9 +573,9 @@
                     <div class="settings-tab-panel" data-settings-panel="notifications">
                         <div class="settings-info-grid">
                             <div class="settings-card">
-                                <span class="detail-label">Unread Notifications</span>
+                                <span class="detail-label">Notification Count</span>
                                 <strong id="settingsNotificationCount">0</strong>
-                                <p>Unread items from appointment updates and inbox messages.</p>
+                                <p>Patients see unread updates, doctors see pending requests, and admins see booked appointments.</p>
                             </div>
                             <div class="settings-card">
                                 <span class="detail-label">Main Alerts</span>
@@ -637,20 +637,20 @@
                         <div>
                             <p class="panel-kicker">Workspace</p>
                             <h3>Preferences</h3>
-                            <p class="panel-helper">Review your current session and local environment details used by the doctor dashboard.</p>
+                            <p class="panel-helper">Review your current session and connection details for this dashboard.</p>
                         </div>
                     </div>
 
                     <div class="settings-grid">
                         <div class="settings-card">
                             <span class="detail-label">Authentication</span>
-                            <strong>JWT session active</strong>
-                            <p>Your session is currently stored in local browser storage.</p>
+                            <strong>Logged in</strong>
+                            <p>Your current browser session is active.</p>
                         </div>
                         <div class="settings-card">
                             <span class="detail-label">API Endpoint</span>
-                            <strong>127.0.0.1:5000</strong>
-                            <p>The dashboard is connected to the local Flask backend.</p>
+                            <strong id="apiEndpointValue">Backend</strong>
+                            <p>The dashboard uses this backend address for profile, appointment, and management data.</p>
                         </div>
                     </div>
                 </section>
@@ -692,25 +692,13 @@
                             <div class="management-header">
                                 <div>
                                     <span class="detail-label">Patients</span>
-                                    <h4 id="patientFormTitle">Edit Patient</h4>
+                                    <h4 id="patientFormTitle">Registered Patients</h4>
                                 </div>
                             </div>
 
                             <p class="management-note">
-                                New patients must register themselves from the registration page.
+                                Patient accounts are created from the registration page. Admin can review the list and delete accounts when needed.
                             </p>
-
-                            <div class="dashboard-form-grid">
-                                <input type="text" id="patientFullName" placeholder="Patient full name">
-                                <input type="email" id="patientEmail" placeholder="Patient email">
-                                <input type="text" id="patientPhone" placeholder="Phone number">
-                                <input type="password" id="patientPassword" placeholder="Optional new password">
-                            </div>
-
-                            <div class="management-actions">
-                                <button class="dashboard-primary-btn" onclick="submitPatientForm()">Update Patient</button>
-                                <button class="secondary-btn" type="button" onclick="resetPatientForm()">Clear</button>
-                            </div>
 
                             <div id="patientList" class="management-list"></div>
                         </section>

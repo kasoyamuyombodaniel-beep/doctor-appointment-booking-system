@@ -190,6 +190,14 @@ function initResetPasswordPage() {
     }
 }
 
+function clearLoginAutofill() {
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    if (emailInput) emailInput.value = "";
+    if (passwordInput) passwordInput.value = "";
+}
+
 function warmBackendConnection() {
     if (backendWarmupStarted) return;
     backendWarmupStarted = true;
@@ -219,6 +227,7 @@ function showToast(message, type = "info") {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+    clearLoginAutofill();
     initResetPasswordPage();
     warmBackendConnection();
 });

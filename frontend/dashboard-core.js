@@ -82,7 +82,6 @@ let currentAdminFilter = "ALL";
 let currentPatientStatusFilter = null;
 
 let editingDoctorId = null;
-let editingPatientId = null;
 let reschedulingAppointmentId = null;
 
 let currentProfile = null;
@@ -124,6 +123,7 @@ function configureLayoutForRole() {
     setText("navRecords", decoded.role === "doctor" ? "Reports" : "Medical Records");
 
     setText("navSettings", "Settings");
+    setText("apiEndpointValue", API_URL.replace(/^https?:\/\//, ""));
 
     setText(
         "appointmentsSectionTitle",
@@ -158,8 +158,6 @@ function configureLayoutForRole() {
         setText("recordsKicker", "Admin Operations");
         setText("recordsTitle", "Management Center");
         setText("navSettings", "Management");
-        setText("navInbox", "Hidden");
-        setText("navRecords", "Hidden");
         setText("messagesPanelAction", "Open Appointments");
 
         const messagesAction = document.getElementById("messagesPanelAction");
@@ -377,7 +375,11 @@ function showSection(sectionName) {
         }
     }
 
-    /* Scroll page to top smoothly */
+    /* Scroll the visible dashboard area back to the top after navigation. */
+    const main = document.querySelector(".dashboard-main");
+    if (main && main.scrollHeight > main.clientHeight) {
+        main.scrollTo({ top: 0, behavior: "smooth" });
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 

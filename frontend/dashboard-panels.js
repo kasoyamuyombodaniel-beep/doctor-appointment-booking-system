@@ -78,6 +78,14 @@ function renderInbox(messages) {
 }
 
 function getDashboardNotificationCount() {
+    if (decoded.role === "doctor") {
+        return doctorAppointments.filter(item => item.status === "PENDING").length;
+    }
+
+    if (decoded.role === "admin") {
+        return allAppointments.length;
+    }
+
     return inboxMessages.filter(item => item.unread).length;
 }
 

@@ -30,8 +30,8 @@
 
 .dashboard-layout {
     min-height: 100vh;
-    height: 100vh;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
 }
 
 .sidebar {
@@ -178,9 +178,9 @@
     min-width: 0;
     padding: 34px 34px 40px;
     background: transparent;
-    height: 100vh;
-    height: 100dvh;
-    overflow-y: auto;
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
 }
 
 .main-content {
@@ -3293,6 +3293,14 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 18px;
+    max-height: 56vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.notification-summary-card {
+    border-color: rgba(47, 107, 168, 0.22);
+    background: linear-gradient(180deg, #f7fbff, #ffffff);
 }
 
 .dashboard-page.admin-view .appointment-record {

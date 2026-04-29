@@ -63,8 +63,10 @@ async function loadNotifications() {
         const normalizedItems = Array.isArray(items) ? items : [];
         let visibleItems = normalizedItems;
 
-        if (decoded.role === "admin" || decoded.role === "doctor") {
+        if (decoded.role === "doctor") {
             visibleItems = normalizedItems.filter(item => item.status === "PENDING");
+        } else if (decoded.role === "admin") {
+            visibleItems = normalizedItems;
         } else {
             visibleItems = normalizedItems.filter(item => item.status === "APPROVED" || item.status === "REJECTED");
         }
@@ -86,7 +88,21 @@ function renderNotifications(items) {
         return;
     }
 
-    list.innerHTML = items.map(item => {
+    const adminSummary = decoded.role === "admin"
+        ? `
+            <article class="notification-card notification-summary-card">
+                <div class="notification-icon pending-note">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div class="notification-content">
+                    <strong>${items.length} appointments booked</strong>
+                    <p>Each notification below shows the patient, the doctor, the date, the time, and the current status.</p>
+                </div>
+            </article>
+        `
+        : "";
+
+    list.innerHTML = adminSummary + items.map(item => {
         if (decoded.role === "doctor") {
             const isUpdating = isNotificationStatusPending(item.id);
             return `
@@ -110,9 +126,7 @@ function renderNotifications(items) {
         }
 
         if (decoded.role === "admin") {
-            const noteText = item.status === "PENDING"
-                ? "A patient request is pending review by a doctor."
-                : `This appointment is currently ${item.status.toLowerCase()}.`;
+            const noteText = `${item.patient_name || "Patient"} booked an appointment with ${item.doctor_name || "Doctor"}.`;
 
             return `
                 <article class="notification-card">
@@ -122,7 +136,7 @@ function renderNotifications(items) {
                     <div class="notification-content">
                         <strong>${escapeHtml(item.patient_name || "Patient")} with ${escapeHtml(item.doctor_name || "Doctor")}</strong>
                         <p>${escapeHtml(noteText)}</p>
-                        <small>${escapeHtml(item.appointment_date)} at ${escapeHtml(item.appointment_time)}</small>
+                        <small>${escapeHtml(item.appointment_date)} at ${escapeHtml(item.appointment_time)} - ${escapeHtml(item.status)}</small>
                     </div>
                 </article>
             `;
@@ -156,7 +170,7 @@ function getEmptyNotificationMessage() {
         return "No pending patient requests right now.";
     }
 
-    return "No pending system notifications right now.";
+    return "No appointments booked yet.";
 }
 
 function escapeHtml(value) {
