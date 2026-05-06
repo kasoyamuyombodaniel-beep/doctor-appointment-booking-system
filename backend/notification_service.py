@@ -90,6 +90,10 @@ def _normalize_phone_number(raw_number):
     # Convert local numbers using the configured default country code.
     if cleaned and not cleaned.startswith("+") and default_country_code:
         normalized_cc = default_country_code if default_country_code.startswith("+") else f"+{default_country_code}"
+        country_digits = normalized_cc.lstrip("+")
+        if cleaned.startswith(country_digits):
+            return f"+{cleaned}"
+
         local_number = cleaned[1:] if cleaned.startswith("0") else cleaned
         if local_number.isdigit():
             cleaned = f"{normalized_cc}{local_number}"
