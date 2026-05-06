@@ -267,6 +267,86 @@ def _is_resend_configured():
     )
 
 
+def _missing_config_reason(label, checks):
+    """Return a readable reason listing missing notification settings."""
+    missing = [name for name, is_present in checks if not is_present]
+    if not missing:
+        return None
+    return f"{label} not configured: missing {', '.join(missing)}"
+
+
+def _missing_config_names(checks):
+    """Return only the names of missing settings for diagnostics."""
+    return [name for name, is_present in checks if not is_present]
+
+
+def _get_email_config_error(payload):
+    """Return the email blocking reason when no provider can send."""
+    recipient_email = payload.get("patient_email")
+
+    if not recipient_email:
+        return "Patient email address missing"
+
+    if current_app.config.get("RESEND_API_KEY") or current_app.config.get("RESEND_FROM_EMAIL"):
+        reason = _missing_config_reason("Resend email", (
+            ("RESEND_API_KEY", bool(current_app.config.get("RESEND_API_KEY"))),
+            ("RESEND_FROM_EMAIL", bool(current_app.config.get("RESEND_FROM_EMAIL"))),
+        ))
+        if reason:
+            return reason
+
+    mail = current_app.extensions.get("mail")
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+    username = current_app.config.get("MAIL_USERNAME")
+    password = current_app.config.get("MAIL_PASSWORD")
+
+    return _missing_config_reason("Email", (
+        ("Flask-Mail", bool(mail and Message)),
+        ("MAIL_DEFAULT_SENDER", bool(sender)),
+        ("MAIL_USERNAME", bool(username)),
+        ("MAIL_PASSWORD", bool(password)),
+    ))
+
+
+def get_notification_config_status():
+    """Return safe notification configuration diagnostics without secrets."""
+    mail = current_app.extensions.get("mail")
+    email_checks = (
+        ("Flask-Mail", bool(mail and Message)),
+        ("MAIL_DEFAULT_SENDER", bool(current_app.config.get("MAIL_DEFAULT_SENDER"))),
+        ("MAIL_USERNAME", bool(current_app.config.get("MAIL_USERNAME"))),
+        ("MAIL_PASSWORD", bool(current_app.config.get("MAIL_PASSWORD"))),
+    )
+    resend_checks = (
+        ("RESEND_API_KEY", bool(current_app.config.get("RESEND_API_KEY"))),
+        ("RESEND_FROM_EMAIL", bool(current_app.config.get("RESEND_FROM_EMAIL"))),
+    )
+    sms_checks = (
+        ("Twilio SDK", bool(Client)),
+        ("TWILIO_ACCOUNT_SID", bool(current_app.config.get("TWILIO_ACCOUNT_SID"))),
+        ("TWILIO_AUTH_TOKEN", bool(current_app.config.get("TWILIO_AUTH_TOKEN"))),
+        ("TWILIO_PHONE_NUMBER", bool(current_app.config.get("TWILIO_PHONE_NUMBER"))),
+    )
+
+    return {
+        "email": {
+            "configured": not _missing_config_names(email_checks),
+            "missing": _missing_config_names(email_checks),
+            "provider": "smtp"
+        },
+        "resend": {
+            "configured": not _missing_config_names(resend_checks),
+            "missing": _missing_config_names(resend_checks),
+            "provider": "resend"
+        },
+        "sms": {
+            "configured": not _missing_config_names(sms_checks),
+            "missing": _missing_config_names(sms_checks),
+            "provider": "twilio"
+        }
+    }
+
+
 # ===================================================
 # SMS BODY BUILDER
 # ===================================================
@@ -332,8 +412,14 @@ def send_email_notification(payload):
     sender = current_app.config.get("MAIL_DEFAULT_SENDER")
 
     # Validate email configuration
+    email_error = _get_email_config_error(payload)
     if not mail or not Message or not sender or not payload.get("patient_email"):
-        return {"channel": "email", "sent": False, "reason": "Email not configured"}
+        return {
+            "channel": "email",
+            "sent": False,
+            "reason": email_error or "Email not configured",
+            "target": payload.get("patient_email")
+        }
 
     # Build email message
     message = Message(
@@ -419,8 +505,19 @@ def send_sms_notification(payload):
     )
 
     # Validate Twilio configuration
-    if not Client or not account_sid or not auth_token or not from_number:
-        return {"channel": "sms", "sent": False, "reason": "SMS not configured"}
+    sms_config_error = _missing_config_reason("SMS", (
+        ("Twilio SDK", bool(Client)),
+        ("TWILIO_ACCOUNT_SID", bool(account_sid)),
+        ("TWILIO_AUTH_TOKEN", bool(auth_token)),
+        ("TWILIO_PHONE_NUMBER", bool(from_number)),
+    ))
+    if sms_config_error:
+        return {
+            "channel": "sms",
+            "sent": False,
+            "reason": sms_config_error,
+            "target": to_number
+        }
 
     if not to_number:
         return {
@@ -529,9 +626,7 @@ def _is_email_configured(payload):
     if _is_resend_configured() and payload.get("patient_email"):
         return True
 
-    mail = current_app.extensions.get("mail")
-    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
-    return bool(mail and Message and sender and payload.get("patient_email"))
+    return _get_email_config_error(payload) is None
 
 
 def _get_sms_validation_error(payload):
@@ -541,8 +636,14 @@ def _get_sms_validation_error(payload):
     from_number = current_app.config.get("TWILIO_PHONE_NUMBER")
     to_number = _normalize_phone_number(payload.get("patient_phone"))
 
-    if not Client or not account_sid or not auth_token or not from_number:
-        return "SMS not configured", to_number
+    sms_config_error = _missing_config_reason("SMS", (
+        ("Twilio SDK", bool(Client)),
+        ("TWILIO_ACCOUNT_SID", bool(account_sid)),
+        ("TWILIO_AUTH_TOKEN", bool(auth_token)),
+        ("TWILIO_PHONE_NUMBER", bool(from_number)),
+    ))
+    if sms_config_error:
+        return sms_config_error, to_number
 
     if not to_number:
         return "Patient phone number missing", str(payload.get("patient_phone") or "")
@@ -569,7 +670,7 @@ def _build_initial_notification_results(payload):
         results.append({
             "channel": "email",
             "sent": False,
-            "reason": "Email not configured",
+            "reason": _get_email_config_error(payload) or "Email not configured",
             "target": payload.get("patient_email")
         })
 

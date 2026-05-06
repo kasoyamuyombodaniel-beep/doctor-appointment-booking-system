@@ -88,8 +88,10 @@ Create a `.env` file inside the `backend/` folder and add:
 SECRET_KEY=your_secret_key
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
-EMAIL_USER=your_email
-EMAIL_PASS=your_password
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+MAIL_USERNAME=your_email
+MAIL_PASSWORD=your_app_password
+MAIL_DEFAULT_SENDER=your_email
 ```
 
 ⚠️ Do not push the `.env` file to GitHub.

@@ -25,7 +25,7 @@ from models import (
 from auth_middleware import token_required
 
 # Notification service that queues email/SMS notifications
-from notification_service import enqueue_status_notifications
+from notification_service import enqueue_status_notifications, get_notification_config_status
 
 
 # Create a Flask Blueprint to group all appointment-related routes
@@ -367,3 +367,14 @@ def handle_twilio_sms_status():
         return jsonify({"message": "Message SID not linked to an appointment"}), 202
 
     return jsonify({"message": "SMS delivery status updated"}), 200
+
+
+@appointment_bp.route("/admin/notification-config", methods=["GET"])
+@token_required
+def get_notification_config(current_user_id, current_role):
+    """Return safe notification provider diagnostics for admin troubleshooting."""
+
+    if current_role != "admin":
+        return jsonify({"error": "Admin access required"}), 403
+
+    return jsonify(get_notification_config_status()), 200

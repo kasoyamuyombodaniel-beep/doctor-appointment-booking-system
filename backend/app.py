@@ -76,6 +76,15 @@ def load_env_file():
 load_env_file()
 
 
+def get_env_value(*names, default=None):
+    """Return the first non-empty environment value from the provided names."""
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    return default
+
+
 # ===================================================
 # APP CONFIGURATION
 # Flask app setup, CORS, JWT secret, mail and Twilio
@@ -146,18 +155,18 @@ app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
 app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL", "false").lower() == "true"
 
 # Email account used to send messages
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_USERNAME"] = get_env_value("MAIL_USERNAME", "EMAIL_USER")
 
 # Email password or app password
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+app.config["MAIL_PASSWORD"] = get_env_value("MAIL_PASSWORD", "EMAIL_PASS")
 app.config["FRONTEND_URL"] = os.getenv("FRONTEND_URL")
-app.config["RESEND_API_KEY"] = os.getenv("RESEND_API_KEY")
-app.config["RESEND_FROM_EMAIL"] = os.getenv("RESEND_FROM_EMAIL")
+app.config["RESEND_API_KEY"] = get_env_value("RESEND_API_KEY", "RESEND_KEY")
+app.config["RESEND_FROM_EMAIL"] = get_env_value("RESEND_FROM_EMAIL", "RESEND_FROM")
 app.config["RESEND_FROM_NAME"] = os.getenv("RESEND_FROM_NAME", "Wisdom Hospital")
 
 
 # Determine sender email and name for outgoing messages
-mail_sender_email = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME"))
+mail_sender_email = get_env_value("MAIL_DEFAULT_SENDER", "MAIL_USERNAME", "EMAIL_USER")
 mail_sender_name = os.getenv("MAIL_SENDER_NAME", "Wisdom Hospital").strip()
 
 # Configure the default sender format
@@ -173,13 +182,17 @@ app.config["MAIL_DEFAULT_SENDER"] = (
 # ---------------------------------------------------
 
 # Twilio account SID used for API authentication
-app.config["TWILIO_ACCOUNT_SID"] = os.getenv("TWILIO_ACCOUNT_SID")
+app.config["TWILIO_ACCOUNT_SID"] = get_env_value("TWILIO_ACCOUNT_SID", "TWILIO_SID")
 
 # Twilio authentication token
-app.config["TWILIO_AUTH_TOKEN"] = os.getenv("TWILIO_AUTH_TOKEN")
+app.config["TWILIO_AUTH_TOKEN"] = get_env_value("TWILIO_AUTH_TOKEN", "TWILIO_TOKEN")
 
 # Twilio phone number used to send SMS messages
-app.config["TWILIO_PHONE_NUMBER"] = os.getenv("TWILIO_PHONE_NUMBER")
+app.config["TWILIO_PHONE_NUMBER"] = get_env_value(
+    "TWILIO_PHONE_NUMBER",
+    "TWILIO_FROM_NUMBER",
+    "TWILIO_NUMBER"
+)
 
 # Optional default country code used to normalize local patient numbers.
 app.config["DEFAULT_PHONE_COUNTRY_CODE"] = os.getenv("DEFAULT_PHONE_COUNTRY_CODE")
