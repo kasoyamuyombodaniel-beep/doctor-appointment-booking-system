@@ -277,14 +277,11 @@ function renderDoctorAppointmentTable() {
 }
 
 function buildStoredDeliverySummary(appointment) {
-    const details = parseNotificationDetails(appointment.notification_delivery_details);
-    const summary = formatNotificationSummary(details);
-
-    if (!summary) {
-        return `<span class="delivery-summary delivery-muted">No delivery update yet</span>`;
-    }
-
-    return `<span class="delivery-summary">${escapeHtml(summary)}</span>`;
+    return `
+        <span class="appointment-table-slot">
+            ${escapeHtml(appointment.appointment_date)} at ${escapeHtml(appointment.appointment_time)}
+        </span>
+    `;
 }
 
 function getStoredDeliveryLabel(item) {
@@ -707,8 +704,6 @@ function openAppointmentDetail(appointmentId) {
 
     const doctorName = appointment.doctor_name || `Doctor #${appointment.doctor_id}`;
     const specialty = appointment.doctor_specialty || "General Consultation";
-    const deliveryDetails = parseNotificationDetails(appointment.notification_delivery_details);
-    const deliveryMarkup = buildNotificationDeliveryMarkup(deliveryDetails);
 
     content.innerHTML = `
         <div class="appointment-detail-header">
@@ -736,8 +731,6 @@ function openAppointmentDetail(appointmentId) {
             </div>
         </div>
 
-        ${deliveryMarkup}
-
         <div class="appointment-detail-actions">
             ${appointment.status !== "REJECTED" ? `
                 <button class="mini-btn" type="button" onclick="closeAppointmentDetail(); rescheduleAppointment(${appointment.id}, ${appointment.doctor_id})">Reschedule</button>
@@ -752,31 +745,7 @@ function openAppointmentDetail(appointmentId) {
 }
 
 function buildNotificationDeliveryMarkup(details) {
-    const visibleDetails = getVisibleNotificationDetails(details);
-
-    if (!visibleDetails.length) {
-        return `
-            <div class="appointment-detail-delivery">
-                <span class="detail-label">Notification Delivery</span>
-                <p>No email or SMS delivery update is recorded yet.</p>
-            </div>
-        `;
-    }
-
-    return `
-        <div class="appointment-detail-delivery">
-            <span class="detail-label">Notification Delivery</span>
-            <div class="delivery-channel-list">
-                ${visibleDetails.map(item => `
-                    <div class="delivery-channel-item">
-                        <strong>${escapeHtml(String(item.channel || "").toUpperCase())}</strong>
-                        <span>${escapeHtml(getNotificationStateLabel(item))}</span>
-                        <small>${escapeHtml(getNotificationStateDetails(item))}</small>
-                    </div>
-                `).join("")}
-            </div>
-        </div>
-    `;
+    return "";
 }
 
 function closeAppointmentDetail() {

@@ -1906,6 +1906,15 @@
     line-height: 1.4;
 }
 
+.appointment-table-slot {
+    display: inline-flex;
+    align-items: center;
+    color: #456682;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
 .delivery-muted {
     color: #7891aa;
 }
