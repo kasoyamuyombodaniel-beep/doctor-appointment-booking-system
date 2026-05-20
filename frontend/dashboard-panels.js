@@ -91,13 +91,6 @@ function getDashboardNotificationCount() {
 
 function handleNotificationButtonClick() {
     if (decoded.role === "doctor") {
-        const unreadIndex = inboxMessages.findIndex(item => item.unread);
-        if (unreadIndex >= 0) {
-            showSection("inbox");
-            openInboxMessage(unreadIndex);
-            return;
-        }
-
         showSection("appointments");
         return;
     }

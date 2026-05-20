@@ -3,7 +3,9 @@
 # ===================================================
 
 # Flask utilities used to define routes and handle requests/responses
-from flask import Blueprint, request, jsonify
+import re
+
+from flask import Blueprint, request, jsonify, current_app
 
 # Database access functions related to patients, doctors and medical records
 from models import (
@@ -26,6 +28,33 @@ from auth_middleware import admin_required
 
 # Create Flask Blueprint to group patient-related routes
 patient_bp = Blueprint("patient_bp", __name__)
+
+
+def _normalize_patient_phone(raw_phone):
+    """Store patient phone numbers in an SMS-ready international format."""
+    phone = re.sub(r"[^\d+]", "", str(raw_phone or "").strip())
+    default_country_code = str(
+        current_app.config.get("DEFAULT_PHONE_COUNTRY_CODE") or "243"
+    ).strip()
+
+    if phone.startswith("00"):
+        phone = f"+{phone[2:]}"
+
+    if phone and not phone.startswith("+") and default_country_code:
+        country_code = default_country_code if default_country_code.startswith("+") else f"+{default_country_code}"
+        country_digits = country_code.lstrip("+")
+
+        if phone.startswith(country_digits):
+            phone = f"+{phone}"
+        else:
+            local_phone = phone[1:] if phone.startswith("0") else phone
+            if local_phone.isdigit():
+                phone = f"{country_code}{local_phone}"
+
+    if phone and not phone.startswith("+") and phone.isdigit() and len(phone) >= 11:
+        phone = f"+{phone}"
+
+    return phone
 
 
 # ===================================================
@@ -79,9 +108,9 @@ def create_patient():
 
         # Extract patient information
         full_name = data.get("full_name", "").strip()
-        email = data.get("email", "").strip()
+        email = data.get("email", "").strip().lower()
         password = data.get("password", "")
-        phone = data.get("phone", "").strip()
+        phone = _normalize_patient_phone(data.get("phone", ""))
 
         # Validate required fields
         if not full_name or not email or not password or not phone:
@@ -97,6 +126,7 @@ def create_patient():
         return jsonify({"message": "Patient created successfully"}), 201
 
     except Exception as e:
+        current_app.logger.exception("Patient registration failed: %s", str(e))
         return jsonify({"error": "Unable to create patient right now"}), 500
 
 
@@ -154,7 +184,7 @@ def edit_patient(current_patient_id, current_role, patient_id):
 
     data = request.get_json()
 
-    email = data.get("email", "").strip()
+    email = data.get("email", "").strip().lower()
 
     # Check for duplicate email
     if patient_email_exists(email, patient_id):
@@ -164,9 +194,9 @@ def edit_patient(current_patient_id, current_role, patient_id):
     update_patient(
         patient_id,
         data["full_name"],
-        data["email"],
+        email,
         data.get("password"),
-        data["phone"]
+        _normalize_patient_phone(data["phone"])
     )
 
     return jsonify({"message": "Patient updated successfully"})
@@ -253,7 +283,7 @@ def update_profile(current_user_id, current_role):
     # ---------------------------------------------------
     # PATIENT PROFILE UPDATE
     # ---------------------------------------------------
-    phone = data.get("phone", "").strip()
+    phone = _normalize_patient_phone(data.get("phone", ""))
 
     if not full_name or not email or not phone:
         return jsonify({"error": "Full name, email and phone are required"}), 400

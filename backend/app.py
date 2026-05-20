@@ -195,7 +195,7 @@ app.config["TWILIO_PHONE_NUMBER"] = get_env_value(
 )
 
 # Optional default country code used to normalize local patient numbers.
-app.config["DEFAULT_PHONE_COUNTRY_CODE"] = os.getenv("DEFAULT_PHONE_COUNTRY_CODE")
+app.config["DEFAULT_PHONE_COUNTRY_CODE"] = os.getenv("DEFAULT_PHONE_COUNTRY_CODE", "243")
 
 # Webhook URL where Twilio sends SMS delivery updates
 app.config["TWILIO_STATUS_CALLBACK_URL"] = os.getenv("TWILIO_STATUS_CALLBACK_URL")
