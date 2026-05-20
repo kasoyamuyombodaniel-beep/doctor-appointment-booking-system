@@ -49,7 +49,6 @@
     position: sticky;
     top: 0;
     height: 100vh;
-    height: 100dvh;
     overflow: hidden;
 }
 
@@ -201,7 +200,6 @@
     top: 0;
     z-index: 20;
     background: rgba(245, 248, 252, 0.86);
-    backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(208, 220, 233, 0.7);
 }
 
@@ -439,7 +437,6 @@
     max-height: 48vh;
     overflow-y: auto;
     padding-right: 6px;
-    overscroll-behavior: contain;
 }
 
 .availability-row {
@@ -940,7 +937,6 @@
     max-height: 60vh;
     border-radius: 18px;
     border: 1px solid #e0e8f2;
-    overscroll-behavior: contain;
 }
 
 .availability-list::-webkit-scrollbar {
@@ -1362,7 +1358,6 @@
     padding: 22px 22px 24px;
     border: 1px solid #d8e4ef;
     box-shadow: 0 20px 36px rgba(28, 63, 99, 0.11);
-    backdrop-filter: none;
 }
 
 .dashboard-page.doctor-view .patient-stats .stat-card::before {
@@ -1638,7 +1633,6 @@
     max-height: 68vh;
     overflow-y: auto;
     padding-right: 8px;
-    overscroll-behavior: contain;
 }
 
 .patient-status-grid {
@@ -1748,7 +1742,6 @@
     max-height: 52vh;
     overflow-y: auto;
     padding-right: 6px;
-    overscroll-behavior: contain;
 }
 
 .appointments-card-list::-webkit-scrollbar,
@@ -1838,7 +1831,6 @@
     position: absolute;
     inset: 0;
     background: rgba(10, 27, 44, 0.48);
-    backdrop-filter: blur(3px);
 }
 
 .appointment-detail-dialog {
@@ -2730,7 +2722,7 @@
 
     .sidebar-nav li span {
         min-width: 0;
-        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     .dashboard-main {
@@ -2762,16 +2754,6 @@
     .dashboard-panel {
         padding: 18px 16px;
         overflow: hidden;
-        backdrop-filter: none;
-    }
-
-    .dashboard-topbar,
-    .stat-card,
-    .simple-card,
-    .message-preview-card,
-    .activity-item,
-    .notification-card {
-        backdrop-filter: none;
     }
 
     .appointments-card-list,
@@ -3102,7 +3084,6 @@
     padding: 18px;
     border-radius: 22px;
     background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(14px);
     color: #ffffff;
 }
 
@@ -3443,7 +3424,6 @@
         border-radius: 22px;
         position: static;
         top: auto;
-        backdrop-filter: none;
         border-bottom: none;
     }
 

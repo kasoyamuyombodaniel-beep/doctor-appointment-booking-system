@@ -90,7 +90,19 @@ function getDashboardNotificationCount() {
 }
 
 function handleNotificationButtonClick() {
-    if (decoded.role === "patient" || decoded.role === "doctor") {
+    if (decoded.role === "doctor") {
+        const unreadIndex = inboxMessages.findIndex(item => item.unread);
+        if (unreadIndex >= 0) {
+            showSection("inbox");
+            openInboxMessage(unreadIndex);
+            return;
+        }
+
+        showSection("appointments");
+        return;
+    }
+
+    if (decoded.role === "patient") {
         showSection("inbox");
         const unreadIndex = inboxMessages.findIndex(item => item.unread);
         if (unreadIndex >= 0) {
