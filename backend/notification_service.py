@@ -28,8 +28,10 @@ except Exception:
 # If Twilio SDK is not installed, Client will be None
 try:
     from twilio.rest import Client
+    from twilio.base.exceptions import TwilioRestException
 except Exception:
     Client = None
+    TwilioRestException = None
 
 
 # Thread pool used to execute notification sending asynchronously
@@ -563,7 +565,30 @@ def send_sms_notification(payload):
         create_kwargs["status_callback"] = status_callback_url
 
     # Send SMS
-    message = client.messages.create(**create_kwargs)
+    try:
+        message = client.messages.create(**create_kwargs)
+    except Exception as error:
+        if TwilioRestException is not None and isinstance(error, TwilioRestException):
+            twilio_reason = (
+                f"Twilio error {getattr(error, 'code', 'unknown')} "
+                f"status={getattr(error, 'status', 'unknown')} "
+                f"message={getattr(error, 'msg', str(error))} "
+                f"more_info={getattr(error, 'uri', '')}"
+            )
+            current_app.logger.error(
+                "SMS TWILIO DETAIL | from=%s | to=%s | reason=%s",
+                from_number,
+                to_number,
+                twilio_reason
+            )
+            return {
+                "channel": "sms",
+                "sent": False,
+                "reason": twilio_reason,
+                "target": to_number
+            }
+
+        raise
 
     # Log SMS sending
     current_app.logger.info(
