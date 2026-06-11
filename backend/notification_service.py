@@ -78,31 +78,13 @@ def _format_doctor_name(raw_name):
 def _normalize_phone_number(raw_number):
     """
     Normalize phone numbers to international format.
-    Removes spaces, symbols and ensures a +countrycode prefix.
+    Removes spaces and symbols while preserving an explicit country code.
     """
     cleaned = re.sub(r"[^\d+]", "", str(raw_number or "").strip())
-    default_country_code = str(
-        current_app.config.get("DEFAULT_PHONE_COUNTRY_CODE") or ""
-    ).strip()
 
     # Convert numbers starting with 00 to + format
     if cleaned.startswith("00"):
         cleaned = f"+{cleaned[2:]}"
-
-    # Convert local numbers using the configured default country code.
-    if cleaned and not cleaned.startswith("+") and default_country_code:
-        normalized_cc = default_country_code if default_country_code.startswith("+") else f"+{default_country_code}"
-        country_digits = normalized_cc.lstrip("+")
-        if cleaned.startswith(country_digits):
-            return f"+{cleaned}"
-
-        local_number = cleaned[1:] if cleaned.startswith("0") else cleaned
-        if local_number.isdigit():
-            cleaned = f"{normalized_cc}{local_number}"
-
-    # If number has no + but seems international, add +
-    if cleaned and not cleaned.startswith("+") and cleaned.isdigit() and len(cleaned) >= 11:
-        cleaned = f"+{cleaned}"
 
     return cleaned
 
