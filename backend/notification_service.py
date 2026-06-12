@@ -477,17 +477,15 @@ def send_sms_notification(payload):
     account_sid = current_app.config.get("TWILIO_ACCOUNT_SID")
     auth_token = current_app.config.get("TWILIO_AUTH_TOKEN")
     from_number = current_app.config.get("TWILIO_PHONE_NUMBER")
-    status_callback_url = current_app.config.get("TWILIO_STATUS_CALLBACK_URL")
 
     # Normalize patient phone number
     to_number = _normalize_phone_number(payload.get("patient_phone"))
 
     current_app.logger.info(
-        "SMS CONFIG CHECK | sid_present=%s | token_present=%s | from_present=%s | callback_present=%s | raw_phone=%s | normalized_phone=%s",
+        "SMS CONFIG CHECK | sid_present=%s | token_present=%s | from_present=%s | raw_phone=%s | normalized_phone=%s",
         bool(account_sid),
         bool(auth_token),
         bool(from_number),
-        bool(status_callback_url),
         str(payload.get("patient_phone") or ""),
         to_number
     )
@@ -542,10 +540,6 @@ def send_sms_notification(payload):
         payload["status"]
     )
 
-    # Add delivery callback URL if configured
-    if status_callback_url:
-        create_kwargs["status_callback"] = status_callback_url
-
     # Send SMS
     try:
         message = client.messages.create(**create_kwargs)
@@ -555,7 +549,8 @@ def send_sms_notification(payload):
                 f"Twilio error {getattr(error, 'code', 'unknown')} "
                 f"status={getattr(error, 'status', 'unknown')} "
                 f"message={getattr(error, 'msg', str(error))} "
-                f"more_info={getattr(error, 'uri', '')}"
+                f"more_info={getattr(error, 'uri', '')} "
+                f"details={getattr(error, 'details', None)}"
             )
             current_app.logger.error(
                 "SMS TWILIO DETAIL | from=%s | to=%s | reason=%s",
