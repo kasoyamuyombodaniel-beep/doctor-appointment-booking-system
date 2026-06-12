@@ -3444,3 +3444,339 @@
         padding-right: 0;
     }
 }
+
+/* ===================================================
+   FINAL MOBILE RESPONSIVE LAYER
+=================================================== */
+
+@media (max-width: 760px) {
+    .dashboard-page {
+        overflow-x: hidden;
+    }
+
+    .dashboard-layout {
+        display: block;
+        width: 100%;
+    }
+
+    .dashboard-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 12px;
+        border-radius: 0;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(16, 46, 77, 0.14);
+    }
+
+    .sidebar-top {
+        display: block;
+        overflow: visible;
+        padding: 0;
+    }
+
+    .sidebar-eyebrow,
+    .sidebar-copy,
+    .sidebar-bottom {
+        display: none;
+    }
+
+    .dashboard-sidebar h2 {
+        margin: 2px 4px 10px;
+        font-size: 20px;
+        line-height: 1.2;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        gap: 8px;
+        margin: 0;
+        padding: 0 0 4px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar-nav li {
+        flex: 0 0 auto;
+        width: auto;
+        min-height: 42px;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        white-space: nowrap;
+    }
+
+    .sidebar-nav li:hover {
+        padding-left: 12px;
+    }
+
+    .dashboard-main,
+    .dashboard-page.patient-view .dashboard-main {
+        width: 100%;
+        min-width: 0;
+        padding: 14px 12px 28px;
+    }
+
+    .dashboard-topbar,
+    .dashboard-page.admin-view .dashboard-topbar {
+        position: static;
+        display: grid;
+        gap: 14px;
+        width: 100%;
+        margin-bottom: 14px;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .dashboard-topbar h1,
+    .dashboard-page.admin-view .dashboard-topbar h1 {
+        font-size: 28px;
+        line-height: 1.1;
+    }
+
+    .welcome-text {
+        margin-top: 6px;
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .topbar-actions {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 10px;
+        width: 100%;
+    }
+
+    .topbar-actions .icon-pill {
+        width: 48px;
+        min-width: 48px;
+        height: 48px;
+    }
+
+    .topbar-profile {
+        width: 100%;
+        min-width: 0;
+        padding: 6px 10px;
+        border-radius: 14px;
+    }
+
+    .topbar-profile > div:last-child {
+        min-width: 0;
+    }
+
+    .topbar-profile strong,
+    .topbar-profile small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dashboard-hero-banner,
+    .admin-command-strip,
+    .admin-ops-grid,
+    .overview-grid,
+    .dashboard-grid,
+    .dashboard-page.patient-view .dashboard-grid,
+    .patient-status-grid,
+    .patient-appointments-board,
+    .profile-detail-grid,
+    .settings-grid,
+    .management-grid,
+    .dashboard-form-grid,
+    .settings-info-grid,
+    .doctor-calendar-grid,
+    .inbox-layout,
+    .report-panels,
+    .report-stat-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dashboard-hero-copy,
+    .dashboard-hero-visual {
+        min-height: auto;
+        border-radius: 18px;
+    }
+
+    .dashboard-hero-copy {
+        padding: 18px 16px;
+    }
+
+    .dashboard-hero-copy h2 {
+        font-size: 26px;
+        letter-spacing: 0;
+    }
+
+    .dashboard-hero-visual {
+        min-height: 160px;
+        padding: 14px;
+    }
+
+    .dashboard-hero-card {
+        max-width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .dashboard-stats,
+    .dashboard-page.admin-view .patient-stats,
+    .patient-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .dashboard-stats .stat-card {
+        min-width: 0;
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .dashboard-stats .stat-card p {
+        margin-top: 10px;
+        font-size: 28px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-panel,
+    .compact-panel,
+    .patient-appointments-column,
+    .management-card,
+    .profile-detail-card,
+    .settings-card {
+        min-width: 0;
+        padding: 16px;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .panel-header,
+    .panel-header-row,
+    .split-header,
+    .appointments-header-actions,
+    .appointment-record-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .panel-header button,
+    .panel-header-row button,
+    .appointments-header-actions button,
+    .appointments-header-actions .search-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .booking-step,
+    .appointment-record,
+    .patient-appointment-card,
+    .message-list-item,
+    .message-content,
+    .notification-card {
+        min-width: 0;
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .appointment-actions,
+    .management-actions,
+    .management-item-actions,
+    .notification-actions,
+    .appointment-detail-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .appointment-actions button,
+    .management-actions button,
+    .management-item-actions button,
+    .notification-actions button,
+    .appointment-detail-actions button {
+        width: 100%;
+    }
+
+    .inbox-layout {
+        height: auto;
+        min-height: 0;
+        gap: 12px;
+    }
+
+    .message-list {
+        max-height: 320px;
+    }
+
+    .message-content {
+        min-height: 180px;
+        overflow-wrap: anywhere;
+    }
+
+    .table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-wrap table {
+        min-width: 640px;
+    }
+
+    .appointment-detail-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .appointment-detail-dialog {
+        width: 100%;
+        max-height: 92dvh;
+        padding: 20px 14px;
+        border-radius: 20px 20px 0 0;
+        overflow-y: auto;
+    }
+
+    .appointment-detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .toast-container {
+        right: 10px;
+        bottom: 10px;
+        left: 10px;
+        width: auto;
+    }
+
+    .toast {
+        width: 100%;
+        max-width: none;
+    }
+}
+
+@media (max-width: 390px) {
+    .dashboard-stats,
+    .dashboard-page.admin-view .patient-stats,
+    .patient-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar-nav li span {
+        display: none;
+    }
+
+    .sidebar-nav li {
+        width: 44px;
+        justify-content: center;
+        padding: 10px;
+    }
+}
