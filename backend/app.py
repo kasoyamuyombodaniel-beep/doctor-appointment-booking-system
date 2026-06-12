@@ -99,21 +99,28 @@ def _get_allowed_cors_origins():
     """
     raw_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
     allow_all = os.getenv("CORS_ALLOW_ALL", "false").lower() == "true"
-
-    if allow_all:
-        return "*"
-
-    if raw_origins.strip():
-        return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
-
-    return [
+    default_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5000",
         "http://127.0.0.1:5000",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
+        "https://kasoyamuyombodaniel-beep.github.io",
     ]
+
+    if allow_all:
+        return "*"
+
+    if raw_origins.strip():
+        configured_origins = [
+            origin.strip()
+            for origin in raw_origins.split(",")
+            if origin.strip()
+        ]
+        return list(dict.fromkeys(configured_origins + default_origins))
+
+    return default_origins
 
 
 # Enable CORS only for configured frontend origins
