@@ -52,6 +52,10 @@
     overflow: hidden;
 }
 
+.mobile-nav-header {
+    display: none;
+}
+
 .sidebar-top {
     display: flex;
     flex-direction: column;
@@ -3463,16 +3467,44 @@
         position: static;
         width: 100%;
         height: auto;
-        padding: 12px;
+        padding: 10px 12px;
         border-radius: 0;
-        overflow: hidden;
+        overflow: visible;
         box-shadow: 0 10px 24px rgba(16, 46, 77, 0.14);
     }
 
+    .mobile-nav-header {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .mobile-nav-header strong {
+        color: #ffffff;
+        font-size: 16px;
+    }
+
+    .mobile-nav-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 9px 13px;
+        border-radius: 12px;
+        color: #12365d;
+        background: #ffffff;
+        font-weight: 800;
+        touch-action: manipulation;
+    }
+
     .sidebar-top {
-        display: block;
+        display: none;
         overflow: visible;
-        padding: 0;
+        padding: 12px 0 0;
     }
 
     .sidebar-eyebrow,
@@ -3481,7 +3513,7 @@
     }
 
     .sidebar-bottom {
-        display: grid;
+        display: none;
         margin-top: 10px;
         padding: 0;
         border: 0;
@@ -3493,15 +3525,20 @@
         display: none;
     }
 
+    .dashboard-sidebar.mobile-nav-open .sidebar-top,
+    .dashboard-sidebar.mobile-nav-open .sidebar-bottom {
+        display: grid;
+    }
+
     .dashboard-sidebar h2 {
-        margin: 2px 4px 10px;
-        font-size: 20px;
+        margin: 0 0 10px;
+        font-size: 17px;
         line-height: 1.2;
     }
 
     .sidebar-nav {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 8px;
         margin: 0;
         padding: 0;
@@ -3515,19 +3552,19 @@
         width: 100%;
         min-width: 0;
         min-height: 50px;
-        gap: 6px;
-        padding: 10px 12px;
+        gap: 10px;
+        padding: 11px 13px;
         border-radius: 12px;
         white-space: normal;
-        text-align: center;
+        text-align: left;
         touch-action: manipulation;
         pointer-events: auto;
     }
 
     .sidebar-nav li span {
         min-width: 0;
-        font-size: 11px;
-        line-height: 1.15;
+        font-size: 13px;
+        line-height: 1.25;
         overflow-wrap: anywhere;
     }
 
@@ -3781,13 +3818,7 @@
     }
 
     .dashboard-page button,
-    .dashboard-page .sidebar-nav li,
-    .dashboard-page .patient-status-card,
-    .dashboard-page .patient-appointment-card,
-    .dashboard-page .message-list-item {
-        position: relative;
-        z-index: 3;
-        pointer-events: auto;
+    .dashboard-page .sidebar-nav li {
         touch-action: manipulation;
     }
 
@@ -3814,10 +3845,6 @@
     .dashboard-page.admin-view .patient-stats,
     .patient-stats {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .sidebar-nav {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .sidebar-nav li {

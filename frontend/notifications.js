@@ -1,6 +1,20 @@
 const API_URL = window.APP_CONFIG?.API_URL || "http://127.0.0.1:5000";
 const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
+function toggleMobileNavigation() {
+    const sidebar = document.querySelector(".dashboard-sidebar");
+    const button = document.querySelector(".mobile-nav-toggle");
+    if (!sidebar || !button) return;
+
+    const isOpen = sidebar.classList.toggle("mobile-nav-open");
+    button.setAttribute("aria-expanded", String(isOpen));
+
+    const icon = button.querySelector("i");
+    if (icon) {
+        icon.className = isOpen ? "fa-solid fa-xmark" : "fa-solid fa-bars";
+    }
+}
+
 if (!token) {
     window.location.href = "login.html";
 }

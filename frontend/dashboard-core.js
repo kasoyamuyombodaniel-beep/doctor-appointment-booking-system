@@ -381,6 +381,39 @@ function showSection(sectionName) {
         main.scrollTo({ top: 0, behavior: "smooth" });
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
+    closeMobileNavigation();
+}
+
+
+function toggleMobileNavigation() {
+    const sidebar = document.querySelector(".dashboard-sidebar");
+    const button = document.querySelector(".mobile-nav-toggle");
+    if (!sidebar || !button) return;
+
+    const isOpen = sidebar.classList.toggle("mobile-nav-open");
+    button.setAttribute("aria-expanded", String(isOpen));
+    button.setAttribute("aria-label", isOpen ? "Close dashboard menu" : "Open dashboard menu");
+
+    const icon = button.querySelector("i");
+    if (icon) {
+        icon.className = isOpen ? "fa-solid fa-xmark" : "fa-solid fa-bars";
+    }
+}
+
+
+function closeMobileNavigation() {
+    const sidebar = document.querySelector(".dashboard-sidebar");
+    const button = document.querySelector(".mobile-nav-toggle");
+    if (!sidebar || !button) return;
+
+    sidebar.classList.remove("mobile-nav-open");
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-label", "Open dashboard menu");
+
+    const icon = button.querySelector("i");
+    if (icon) {
+        icon.className = "fa-solid fa-bars";
+    }
 }
 
 
