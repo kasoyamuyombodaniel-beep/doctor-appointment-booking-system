@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="dashboard.css?v=20260612-2">
+    <link rel="stylesheet" href="dashboard.css?v=20260612-3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -69,6 +69,12 @@
                         <button type="button" onclick="showSection('settings')">
                             <i class="fa-solid fa-sliders"></i>
                             <span id="navSettings">Settings</span>
+                        </button>
+                    </li>
+                    <li class="mobile-logout-nav">
+                        <button type="button" onclick="logout()">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
                         </button>
                     </li>
                 </ul>
@@ -752,11 +758,11 @@
     <div id="toastContainer" class="toast-container"></div>
     <!-- Dashboard scripts: chart library, shared logic, data loaders, panels, and bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="config.js?v=20260612-2"></script>
-    <script src="dashboard-core.js?v=20260612-2"></script>
-    <script src="dashboard-data.js?v=20260612-2"></script>
-    <script src="dashboard-panels.js?v=20260612-2"></script>
-    <script src="dashboard-init.js?v=20260612-2"></script>
+    <script src="config.js?v=20260612-3"></script>
+    <script src="dashboard-core.js?v=20260612-3"></script>
+    <script src="dashboard-data.js?v=20260612-3"></script>
+    <script src="dashboard-panels.js?v=20260612-3"></script>
+    <script src="dashboard-init.js?v=20260612-3"></script>
 </body>
 
 </html>
