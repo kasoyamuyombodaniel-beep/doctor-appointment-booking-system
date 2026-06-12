@@ -3476,8 +3476,20 @@
     }
 
     .sidebar-eyebrow,
-    .sidebar-copy,
+    .sidebar-copy {
+        display: none;
+    }
+
     .sidebar-bottom {
+        display: grid;
+        margin-top: 10px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .sidebar-status-card {
         display: none;
     }
 
@@ -3488,31 +3500,49 @@
     }
 
     .sidebar-nav {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
         margin: 0;
-        padding: 0 0 4px;
-        overflow-x: auto;
-        overscroll-behavior-x: contain;
-        scrollbar-width: none;
-    }
-
-    .sidebar-nav::-webkit-scrollbar {
-        display: none;
+        padding: 0;
+        overflow: visible;
     }
 
     .sidebar-nav li {
-        flex: 0 0 auto;
-        width: auto;
-        min-height: 42px;
-        gap: 8px;
+        position: relative;
+        z-index: 2;
+        justify-content: center;
+        width: 100%;
+        min-width: 0;
+        min-height: 50px;
+        gap: 6px;
         padding: 10px 12px;
         border-radius: 12px;
-        white-space: nowrap;
+        white-space: normal;
+        text-align: center;
+        touch-action: manipulation;
+        pointer-events: auto;
+    }
+
+    .sidebar-nav li span {
+        min-width: 0;
+        font-size: 11px;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
     }
 
     .sidebar-nav li:hover {
         padding-left: 12px;
+    }
+
+    .dashboard-logout-btn {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        min-height: 44px;
+        border-radius: 12px;
+        touch-action: manipulation;
+        pointer-events: auto;
     }
 
     .dashboard-main,
@@ -3655,7 +3685,7 @@
         min-width: 0;
         padding: 16px;
         border-radius: 16px;
-        overflow: hidden;
+        overflow: visible;
     }
 
     .panel-header,
@@ -3750,6 +3780,22 @@
         gap: 10px;
     }
 
+    .dashboard-page button,
+    .dashboard-page .sidebar-nav li,
+    .dashboard-page .patient-status-card,
+    .dashboard-page .patient-appointment-card,
+    .dashboard-page .message-list-item {
+        position: relative;
+        z-index: 3;
+        pointer-events: auto;
+        touch-action: manipulation;
+    }
+
+    .dashboard-page button:disabled,
+    .dashboard-page .slot-button-booked {
+        pointer-events: none;
+    }
+
     .toast-container {
         right: 10px;
         bottom: 10px;
@@ -3770,13 +3816,11 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .sidebar-nav li span {
-        display: none;
+    .sidebar-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .sidebar-nav li {
-        width: 44px;
-        justify-content: center;
-        padding: 10px;
+        width: 100%;
     }
 }
