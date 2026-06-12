@@ -349,7 +349,7 @@ def _build_sms_body(payload):
     doctor_name = _format_doctor_name(payload.get("doctor_name"))
 
     return (
-        f"Your appointment with Dr. {doctor_name} on "
+        f"Wisdom Hospital: Your appointment with Dr. {doctor_name} on "
         f"{appointment_day_text}{payload['appointment_date']} at {payload['appointment_time']} "
         f"is currently {payload['status']}."
     )
