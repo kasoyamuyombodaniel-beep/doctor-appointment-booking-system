@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="dashboard.css?v=20260612-1">
+    <link rel="stylesheet" href="dashboard.css?v=20260612-2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -35,29 +35,41 @@
                 <p class="sidebar-copy" id="sidebarCopy">Appointments, users, and activity in one place.</p>
 
                 <ul class="sidebar-nav">
-                    <li class="active" data-section="overview" onclick="showSection('overview')">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span id="navOverview">Dashboard</span>
+                    <li class="active" data-section="overview">
+                        <button type="button" onclick="showSection('overview')">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span id="navOverview">Dashboard</span>
+                        </button>
                     </li>
-                    <li class="doctor-only" data-section="my-patients" onclick="showSection('my-patients')">
-                        <i class="fa-solid fa-hospital-user"></i>
-                        <span id="navPatients">My Patients</span>
+                    <li class="doctor-only" data-section="my-patients">
+                        <button type="button" onclick="showSection('my-patients')">
+                            <i class="fa-solid fa-hospital-user"></i>
+                            <span id="navPatients">My Patients</span>
+                        </button>
                     </li>
-                    <li data-section="appointments" onclick="showSection('appointments')">
-                        <i class="fa-solid fa-calendar-check"></i>
-                        <span id="navAppointments">Appointments</span>
+                    <li data-section="appointments">
+                        <button type="button" onclick="showSection('appointments')">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <span id="navAppointments">Appointments</span>
+                        </button>
                     </li>
-                    <li class="patient-doctor-only" data-section="inbox" onclick="showSection('inbox')">
-                        <i class="fa-solid fa-envelope-open-text"></i>
-                        <span id="navInbox">Inbox</span>
+                    <li class="patient-doctor-only" data-section="inbox">
+                        <button type="button" onclick="showSection('inbox')">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                            <span id="navInbox">Inbox</span>
+                        </button>
                     </li>
-                    <li class="patient-doctor-only" data-section="records" onclick="showSection('records')">
-                        <i class="fa-solid fa-file-medical"></i>
-                        <span id="navRecords">Medical Records</span>
+                    <li class="patient-doctor-only" data-section="records">
+                        <button type="button" onclick="showSection('records')">
+                            <i class="fa-solid fa-file-medical"></i>
+                            <span id="navRecords">Medical Records</span>
+                        </button>
                     </li>
-                    <li data-section="settings" onclick="showSection('settings')">
-                        <i class="fa-solid fa-sliders"></i>
-                        <span id="navSettings">Settings</span>
+                    <li data-section="settings">
+                        <button type="button" onclick="showSection('settings')">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span id="navSettings">Settings</span>
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -740,11 +752,11 @@
     <div id="toastContainer" class="toast-container"></div>
     <!-- Dashboard scripts: chart library, shared logic, data loaders, panels, and bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="config.js?v=20260612-1"></script>
-    <script src="dashboard-core.js?v=20260612-1"></script>
-    <script src="dashboard-data.js?v=20260612-1"></script>
-    <script src="dashboard-panels.js?v=20260612-1"></script>
-    <script src="dashboard-init.js?v=20260612-1"></script>
+    <script src="config.js?v=20260612-2"></script>
+    <script src="dashboard-core.js?v=20260612-2"></script>
+    <script src="dashboard-data.js?v=20260612-2"></script>
+    <script src="dashboard-panels.js?v=20260612-2"></script>
+    <script src="dashboard-init.js?v=20260612-2"></script>
 </body>
 
 </html>

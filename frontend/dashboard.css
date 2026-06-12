@@ -98,24 +98,31 @@
 }
 
 .sidebar-nav li {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
     border-radius: 16px;
-    cursor: pointer;
     color: rgba(234, 242, 255, 0.88);
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.04);
+    overflow: hidden;
 }
 
-.sidebar-nav li i {
+.sidebar-nav li button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 14px 16px;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+}
+
+.sidebar-nav li button i {
     width: 18px;
     text-align: center;
 }
 
 .sidebar-nav li:hover {
-    padding-left: 16px;
     opacity: 1;
     background: rgba(255, 255, 255, 0.1);
 }
@@ -3548,28 +3555,34 @@
     .sidebar-nav li {
         position: relative;
         z-index: 2;
-        justify-content: center;
         width: 100%;
         min-width: 0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .sidebar-nav li button {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        width: 100%;
         min-height: 50px;
         gap: 10px;
         padding: 11px 13px;
-        border-radius: 12px;
+        color: inherit;
+        background: transparent;
         white-space: normal;
         text-align: left;
         touch-action: manipulation;
         pointer-events: auto;
     }
 
-    .sidebar-nav li span {
+    .sidebar-nav li button span {
         min-width: 0;
         font-size: 13px;
         line-height: 1.25;
         overflow-wrap: anywhere;
-    }
-
-    .sidebar-nav li:hover {
-        padding-left: 12px;
     }
 
     .dashboard-logout-btn {
@@ -3818,7 +3831,7 @@
     }
 
     .dashboard-page button,
-    .dashboard-page .sidebar-nav li {
+    .dashboard-page .sidebar-nav li button {
         touch-action: manipulation;
     }
 
